@@ -1,283 +1,34 @@
 <!DOCTYPE html>
-
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Республика Жакид — официальный сайт микронации</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', 'Linux Libertine', 'Georgia', serif;
-            background-color: #f0f2f5;
-            color: #202122;
-            line-height: 1.5;
-        }
-        .header {
-            background: linear-gradient(135deg, #0a2f6c 0%, #0a3d7e 100%);
-            color: white;
-            padding: 20px 24px;
-            border-bottom: 3px solid #ffd700;
-        }
-        .header-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        .logo h1 {
-            font-size: 28px;
-            letter-spacing: 2px;
-        }
-        .logo p {
-            font-size: 12px;
-            opacity: 0.8;
-        }
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            margin-left: 25px;
-            font-size: 14px;
-            transition: 0.3s;
-        }
-        .nav-links a:hover {
-            color: #ffd700;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 30px auto;
-            display: flex;
-            gap: 30px;
-            padding: 0 24px;
-        }
-        .sidebar {
-            width: 280px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 20px;
-            height: fit-content;
-            position: sticky;
-            top: 20px;
-        }
-        .sidebar h3 {
-            color: #0a2f6c;
-            border-bottom: 2px solid #ffd700;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-        .sidebar ul {
-            list-style: none;
-        }
-        .sidebar li {
-            margin-bottom: 12px;
-        }
-        .sidebar a {
-            text-decoration: none;
-            color: #2c3e66;
-            transition: 0.3s;
-        }
-        .sidebar a:hover {
-            color: #ffd700;
-            padding-left: 5px;
-        }
-        .main-content {
-            flex: 1;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 35px 45px;
-        }
-        .title {
-            font-size: 36px;
-            color: #0a2f6c;
-            border-left: 5px solid #ffd700;
-            padding-left: 20px;
-            margin-bottom: 25px;
-        }
-        .infobox {
-            float: right;
-            width: 300px;
-            background: #f8f9fc;
-            border: 1px solid #dce3ec;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 0 0 20px 25px;
-            font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .infobox-title {
-            font-size: 22px;
-            font-weight: bold;
-            text-align: center;
-            color: #0a2f6c;
-            border-bottom: 2px solid #ffd700;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
-        }
-        .infobox table {
-            width: 100%;
-        }
-        .infobox th {
-            text-align: left;
-            font-weight: bold;
-            padding: 8px 5px;
-            width: 40%;
-            color: #555;
-        }
-        .infobox td {
-            padding: 8px 5px;
-        }
-        .flag {
-            text-align: center;
-            font-size: 60px;
-            margin: 10px 0;
-        }
-        .president-photo {
-            text-align: center;
-            margin: 10px 0;
-            font-size: 48px;
-        }
-        .toc {
-            background: #f8f9fc;
-            border: 1px solid #dce3ec;
-            border-radius: 8px;
-            padding: 15px 20px;
-            margin: 25px 0;
-            width: 300px;
-        }
-        .toc-title {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 10px;
-            color: #0a2f6c;
-        }
-        h2 {
-            color: #0a2f6c;
-            border-bottom: 2px solid #ffd700;
-            padding-bottom: 8px;
-            margin: 30px 0 20px 0;
-            font-size: 26px;
-        }
-        .stat-block {
-            background: linear-gradient(135deg, #0a2f6c 0%, #144a8a 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 30px 0;
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            text-align: center;
-        }
-        .stat-item h3 {
-            font-size: 36px;
-            color: #ffd700;
-        }
-        .stat-item p {
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        .footer {
-            background: #0a2f6c;
-            color: white;
-            text-align: center;
-            padding: 25px;
-            margin-top: 40px;
-            font-size: 13px;
-        }
-        .btn {
-            background: #ffd700;
-            color: #0a2f6c;
-            padding: 10px 20px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-block;
-            margin-top: 15px;
-            transition: 0.3s;
-        }
-        .btn:hover {
-            background: #ffed4a;
-            transform: scale(1.05);
-        }
-        @media (max-width: 900px) {
-            .container {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                position: static;
-            }
-            .infobox {
-                float: none;
-                margin: 20px auto;
-                width: 100%;
-            }
-            .stat-block {
-                flex-direction: column;
-                gap: 20px;
-            }
-        }
-    </style>
+    <title>МикронацииВики</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<div class="header">
-    <div class="header-container">
-        <div class="logo">
-            <h1>🇯🇰 Республика Жакид</h1>
-            <p>Суверенное виртуальное государство</p>
-        </div>
-        <div class="nav-links">
-            <a href="#">Главная</a>
-            <a href="#">Конституция</a>
-            <a href="#">Законы</a>
-            <a href="#">Президент</a>
-            <a href="#">Гражданство</a>
-            <a href="#">Контакты</a>
+    <div class="header">
+        <h1>🌍 МикронацииВики</h1>
+        <p>Свободная энциклопедия микронаций</p>
+        <div class="github-info">
+            🔒 Все изменения через <a href="https://github.com/kitten2008/kitten2008.github.io" target="_blank">репозиторий GitHub</a>
         </div>
     </div>
-</div>
 
-<div class="container">
-    <div class="sidebar">
-        <h3>📌 Меню</h3>
-        <ul>
-            <li><a href="#">🏠 Главная страница</a></li>
-            <li><a href="#">📜 Конституция Жакида</a></li>
-            <li><a href="#">⚖️ Уголовный кодекс</a></li>
-            <li><a href="#">💰 Налоговый кодекс</a></li>
-            <li><a href="#">🎖️ Военный устав</a></li>
-            <li><a href="#">🔐 Encrypt Algorithm of Jakid</a></li>
-            <li><a href="#">💎 Банк Жакида (бот)</a></li>
-            <li><a href="#">📺 Telegram-канал</a></li>
-            <li><a href="#">📱 Сообщество ВК</a></li>
-        </ul>
-        <h3 style="margin-top: 25px;">🌍 Ссылки</h3>
-        <ul>
-            <li><a href="#">Зеркало сайта №1</a></li>
-            <li><a href="#">Зеркало сайта №2</a></li>
-            <li><a href="#">Дипломатическая служба</a></li>
-            <li><a href="#">Посольства</a></li>
-        </ul>
+    <div class="search">
+        <input type="text" id="searchInput" placeholder="Поиск микронаций...">
     </div>
 
-</div>
+    <div class="microlist" id="microlist">
+        <!-- Список будет загружаться из JSON -->
+    </div>
 
-<div class="footer">
-    <p>🇯🇰 Республика Жакид — суверенное виртуальное государство. Все права защищены.</p>
-    <p>Официальный сайт | Telegram-канал | Сообщество ВК | Encrypt Algorithm of Jakid v1.0</p>
-    <p style="margin-top: 10px; font-size: 11px;">© 2024-2026 Республика Жакид. Президент Кошелев Денис Андреевич.</p>
-</div>
+    <div class="footer">
+        <a href="https://github.com/kitten2008/kitten2008.github.io" class="github-link">
+            📝 Редактировать на GitHub → Предложить изменения
+        </a>
+    </div>
 
+    <script src="js/main.js"></script>
 </body>
-                                                  </html>
+</html>
