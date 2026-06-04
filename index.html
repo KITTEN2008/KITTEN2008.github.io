@@ -495,60 +495,89 @@
     let unreadCounts = {};
     let totalUnread = 0;
     
-    // ========== WEBRTC ЗВОНКИ (через Firebase, без PeerJS) ==========
+    // ========== WEBRTC ЗВОНКИ (через Firebase, с отладкой) ==========
     let localStream = null;
     let currentCall = null;
     let isCallActive = false;
     let incomingCallFrom = null;
     let peerConnection = null;
     let pendingIceCandidates = [];
+    let isCalling = false;
     
     const configuration = {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' }
         ]
     };
     
+    function logCall(msg) {
+        console.log('[CALL]', msg);
+        showToast(msg, "📞");
+    }
+    
     // Отправка сигнала через Firebase
-    async function sendSignal(toUserId, signal) {
+    async function sendSignal(toUserId, signal, type) {
+        const signalData = {
+            from: myId,
+            to: toUserId,
+            signal: signal,
+            type: type,
+            time: Date.now()
+        };
+        logCall(`📡 Отправка ${type} для ${toUserId}`);
         await fetch(`${FIREBASE_URL}signals/${toUserId}.json`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ from: myId, signal: signal, time: Date.now() })
+            body: JSON.stringify(signalData)
         });
     }
     
     // Получение сигналов
     async function listenForSignals() {
-        const resp = await fetch(`${FIREBASE_URL}signals/${myId}.json`);
-        const signals = await resp.json() || {};
-        for (let id in signals) {
-            const data = signals[id];
-            if (data.from !== myId) {
-                await handleSignal(data.from, data.signal);
-                await fetch(`${FIREBASE_URL}signals/${myId}/${id}.json`, { method: 'DELETE' });
+        try {
+            const resp = await fetch(`${FIREBASE_URL}signals/${myId}.json`);
+            const signals = await resp.json() || {};
+            for (let id in signals) {
+                const data = signals[id];
+                if (data.from !== myId) {
+                    logCall(`📨 Получен сигнал ${data.type} от ${data.from}`);
+                    await handleSignal(data.from, data.signal, data.type);
+                    await fetch(`${FIREBASE_URL}signals/${myId}/${id}.json`, { method: 'DELETE' });
+                }
             }
-        }
+        } catch(e) { console.log("Ошибка получения сигналов:", e); }
         setTimeout(listenForSignals, 2000);
     }
     
-    async function handleSignal(fromUserId, signal) {
-        if (!isCallActive && signal.type !== 'offer') return;
+    async function handleSignal(fromUserId, signal, type) {
+        if (!isCallActive && type !== 'offer' && !isCalling) {
+            if (type === 'offer') {
+                incomingCallFrom = fromUserId;
+                const callerName = getCallerName(incomingCallFrom);
+                document.getElementById('callerName').innerHTML = callerName;
+                document.getElementById('incomingCallModal').style.display = 'flex';
+                logCall(`📞 Входящий звонок от ${callerName}`);
+                // Сохраняем offer для ответа
+                window.pendingOffer = signal;
+            }
+            return;
+        }
         
-        if (!peerConnection) {
+        if (!peerConnection && (type === 'offer' || type === 'answer')) {
             await createPeerConnection(fromUserId);
         }
         
-        if (signal.type === 'offer') {
+        if (signal.type === 'offer' || signal.type === 'answer') {
             await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            await sendSignal(fromUserId, peerConnection.localDescription);
-        } else if (signal.type === 'answer') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
+            if (signal.type === 'offer') {
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                await sendSignal(fromUserId, peerConnection.localDescription, 'answer');
+            }
         } else if (signal.candidate) {
-            if (peerConnection.remoteDescription) {
+            if (peerConnection && peerConnection.remoteDescription) {
                 await peerConnection.addIceCandidate(new RTCIceCandidate(signal));
             } else {
                 pendingIceCandidates.push(signal);
@@ -557,21 +586,27 @@
     }
     
     async function createPeerConnection(targetUserId) {
+        logCall(`🔌 Создание PeerConnection для ${targetUserId}`);
         peerConnection = new RTCPeerConnection(configuration);
         
         if (localStream) {
             localStream.getTracks().forEach(track => {
                 peerConnection.addTrack(track, localStream);
+                logCall(`🎤 Добавлен трек микрофона`);
             });
+        } else {
+            logCall(`⚠️ Нет localStream!`);
         }
         
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                sendSignal(targetUserId, event.candidate);
+                logCall(`❄️ ICE кандидат отправлен`);
+                sendSignal(targetUserId, event.candidate, 'ice');
             }
         };
         
         peerConnection.ontrack = (event) => {
+            logCall(`🔊 Получен аудиопоток!`);
             const audio = new Audio();
             audio.srcObject = event.streams[0];
             audio.play().catch(e => console.log);
@@ -579,7 +614,12 @@
         };
         
         peerConnection.onconnectionstatechange = () => {
+            logCall(`📶 Состояние соединения: ${peerConnection.connectionState}`);
+            if (peerConnection.connectionState === 'connected') {
+                document.getElementById('callStatus').innerHTML = '🔊 В разговоре';
+            }
             if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
+                logCall(`❌ Соединение потеряно`);
                 endCall();
             }
         };
@@ -595,47 +635,73 @@
             showToast("❌ Звонки доступны только в личных чатах", "📞");
             return;
         }
-        if (isCallActive) {
+        if (isCallActive || isCalling) {
             showToast("❌ Уже есть активный звонок", "📞");
             return;
         }
         
+        isCalling = true;
+        logCall(`📞 Начинаем звонок ${currentChatName} (${currentChat})`);
+        
         try {
+            logCall(`🎤 Запрос доступа к микрофону...`);
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            logCall(`✅ Микрофон получен`);
+            
             await createPeerConnection(currentChat);
             
+            logCall(`📡 Создание offer...`);
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
-            await sendSignal(currentChat, peerConnection.localDescription);
+            await sendSignal(currentChat, peerConnection.localDescription, 'offer');
             
             document.getElementById('activeCallModal').style.display = 'flex';
             document.getElementById('activeCallName').innerHTML = currentChatName;
             document.getElementById('callStatus').innerHTML = '⏳ Вызов...';
             isCallActive = true;
+            isCalling = false;
+            logCall(`✅ Offer отправлен, ожидание ответа...`);
         } catch(e) {
-            console.error(e);
+            logCall(`❌ Ошибка: ${e.message}`);
             showToast("❌ Нет доступа к микрофону", "🎤");
+            isCalling = false;
+            endCall();
         }
     }
     
     async function answerCall() {
         if (!incomingCallFrom) return;
+        logCall(`📞 Ответ на звонок от ${incomingCallFrom}`);
         
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            logCall(`✅ Микрофон получен для ответа`);
+            
             await createPeerConnection(incomingCallFrom);
+            
+            if (window.pendingOffer) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(window.pendingOffer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                await sendSignal(incomingCallFrom, peerConnection.localDescription, 'answer');
+                window.pendingOffer = null;
+                logCall(`✅ Answer отправлен`);
+            }
             
             document.getElementById('incomingCallModal').style.display = 'none';
             document.getElementById('activeCallModal').style.display = 'flex';
             document.getElementById('activeCallName').innerHTML = getCallerName(incomingCallFrom);
             document.getElementById('callStatus').innerHTML = '⏳ Соединение...';
             isCallActive = true;
+            incomingCallFrom = null;
         } catch(e) {
+            logCall(`❌ Ошибка при ответе: ${e.message}`);
             showToast("❌ Нет доступа к микрофону", "🎤");
         }
     }
     
     function endCall() {
+        logCall(`🔴 Завершение звонка`);
         if (peerConnection) {
             peerConnection.close();
             peerConnection = null;
@@ -645,8 +711,10 @@
             localStream = null;
         }
         isCallActive = false;
+        isCalling = false;
         incomingCallFrom = null;
         pendingIceCandidates = [];
+        window.pendingOffer = null;
         document.getElementById('activeCallModal').style.display = 'none';
         document.getElementById('incomingCallModal').style.display = 'none';
     }
@@ -658,27 +726,12 @@
         return peerId;
     }
     
-    // Слушаем входящие звонки через Firebase
-    async function listenForIncomingCalls() {
-        const resp = await fetch(`${FIREBASE_URL}signals/${myId}.json?orderBy=\"time\"&limitToLast=1`);
-        const signals = await resp.json() || {};
-        for (let id in signals) {
-            const data = signals[id];
-            if (data && data.signal && data.signal.type === 'offer' && !isCallActive) {
-                incomingCallFrom = data.from;
-                const callerName = getCallerName(incomingCallFrom);
-                document.getElementById('callerName').innerHTML = callerName;
-                document.getElementById('incomingCallModal').style.display = 'flex';
-                break;
-            }
-        }
-        setTimeout(listenForIncomingCalls, 3000);
-    }
-    
     document.getElementById('answerCallBtn').onclick = answerCall;
     document.getElementById('declineCallBtn').onclick = () => {
         document.getElementById('incomingCallModal').style.display = 'none';
         incomingCallFrom = null;
+        window.pendingOffer = null;
+        logCall(`❌ Звонок отклонён`);
     };
     document.getElementById('endCallBtn').onclick = endCall;
     
@@ -1050,8 +1103,11 @@
     updateOnline();
     loadMessages();
     listenForSignals();
-    listenForIncomingCalls();
     setInterval(register, 30000);
+    
+    // Делаем функцию endCall глобальной для отладки
+    window.debugEndCall = endCall;
+    window.debugStartCall = startCall;
 </script>
 </body>
 </html>
