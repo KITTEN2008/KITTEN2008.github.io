@@ -15,21 +15,22 @@
         }
         .header {
             background: linear-gradient(135deg, #0f6e6e, #0a5a5a);
-            padding: 15px;
+            padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: white;
         }
-        .header h1 { font-size: 1.2rem; }
+        .header h1 { font-size: 1.1rem; }
+        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; display: none; }
+        .menu-btn { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; }
         .status-bar {
             background: #0f1420;
-            padding: 8px 15px;
+            padding: 6px 15px;
             display: flex;
             justify-content: space-between;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #aaa;
-            border-bottom: 1px solid #2a2f40;
         }
         .messages {
             flex: 1;
@@ -47,13 +48,13 @@
             position: relative;
         }
         .message-own { align-self: flex-end; background: #0f6e6e; color: white; border-bottom-right-radius: 5px; }
-        .message-other { align-self: flex-start; background: #2a2f40; color: #e0e0e0; border-bottom-left-radius: 5px; }
+        .message-other { align-self: flex-start; background: #2a2f40; color: #e0e0e0; border-bottom-left-radius: 5px; cursor: pointer; }
         .message-sender { font-size: 0.65rem; opacity: 0.8; margin-bottom: 4px; }
         .message-text { font-size: 0.9rem; line-height: 1.4; }
         .message-time { font-size: 0.55rem; opacity: 0.5; margin-top: 4px; }
         .reply-badge {
             font-size: 0.65rem;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.15);
             padding: 4px 8px;
             border-radius: 12px;
             margin-bottom: 6px;
@@ -91,27 +92,87 @@
             font-size: 0.75rem;
             display: flex;
             justify-content: space-between;
-            border-top: 1px solid #2a2f40;
         }
-        .cancel-reply {
-            background: none;
-            border: none;
-            color: #ff8888;
+        .cancel-reply { background: none; border: none; color: #ff8888; cursor: pointer; }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: #1a1f2e;
+            z-index: 200;
+            transition: left 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-header { padding: 20px; background: #0f6e6e; color: white; }
+        .sidebar-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #2a2f40;
             cursor: pointer;
         }
+        .sidebar-item:hover { background: #2a2f40; }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 150;
+            display: none;
+        }
+        .overlay.show { display: block; }
         .online-count { color: #00ffcc; }
-        @media (max-width: 600px) {
-            .message { max-width: 90%; }
+        .online-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+        .online-user:hover { background: #2a2f40; }
+        .online-user.active { background: #0f6e6e; }
+        .user-status { width: 8px; height: 8px; border-radius: 50%; background: #00ff00; }
+        @media (min-width: 768px) {
+            .menu-btn { display: none; }
+            .sidebar { position: relative; left: 0; width: 260px; }
+            .overlay { display: none !important; }
+            .back-btn { display: inline-block; }
+        }
+        @media (max-width: 767px) {
+            .sidebar:not(.open) { display: none; }
+            .back-btn { display: inline-block; }
         }
     </style>
 </head>
 <body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <strong>🇯🇴 JNet</strong>
+        <div id="myInfo" style="font-size:0.7rem; margin-top:5px;"></div>
+    </div>
+    <div class="sidebar-item" onclick="switchToGlobal(); closeSidebar();">🌍 Общий чат</div>
+    <div class="sidebar-item" style="opacity:0.7;">👥 Онлайн</div>
+    <div id="onlineList" style="padding:10px; max-height:300px; overflow-y:auto;"></div>
+    <div class="sidebar-item" onclick="openNameModal(); closeSidebar();">✏️ Сменить имя</div>
+</div>
+
+<div class="main-chat" style="flex:1; display:flex; flex-direction:column; height:100vh;">
     <div class="header">
-        <h1>🌍 JNet — Общий чат</h1>
-        <div style="width: 40px;"></div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+            <button class="back-btn" id="backBtn" onclick="switchToGlobal()" style="display:none;">←</button>
+            <h1 id="chatTitle">🌍 Общий чат</h1>
+        </div>
+        <div></div>
     </div>
     <div class="status-bar">
-        <span>🇯🇴 Республика Жакид</span>
+        <span>🇯🇴 JNet</span>
         <span class="online-count" id="onlineCount">🖧 Онлайн: 0</span>
     </div>
     <div class="messages" id="messages"></div>
@@ -123,6 +184,16 @@
         <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
         <button onclick="sendMessage()">📡</button>
     </div>
+</div>
+
+<div id="nameModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:300;">
+    <div style="background:#1a1f2e; padding:20px; border-radius:20px; width:90%; max-width:320px;">
+        <h3>Сменить имя</h3>
+        <input type="text" id="newName" placeholder="Новое имя" style="width:100%; padding:10px; margin:10px 0; border-radius:10px; background:#2a2f40; color:white; border:none;">
+        <button onclick="changeName()" style="background:#0f6e6e; color:white; padding:10px 20px; border:none; border-radius:10px;">Сохранить</button>
+        <button onclick="closeModal()" style="margin-left:10px; padding:10px 20px;">Отмена</button>
+    </div>
+</div>
 
 <script>
     const FIREBASE_URL = "https://jnet-3359c-default-rtdb.firebaseio.com/";
@@ -134,14 +205,31 @@
     }
     let myName = localStorage.getItem('jnet_name') || myId;
     
+    let currentChat = 'global';
+    let currentChatName = 'Общий чат';
     let replyTo = null;
     let processedMessages = new Set();
-    let bannedUsers = JSON.parse(localStorage.getItem('jnet_banned') || '[]');
+    let messagesCache = [];
     
-    function isBanned(id) { return bannedUsers.includes(id); }
+    document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`;
+    
+    function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("open");
+        document.getElementById("overlay").classList.toggle("show");
+    }
+    function closeSidebar() {
+        document.getElementById("sidebar").classList.remove("open");
+        document.getElementById("overlay").classList.remove("show");
+    }
+    function closeModal() {
+        document.getElementById("nameModal").style.display = "none";
+    }
+    function openNameModal() {
+        document.getElementById("newName").value = myName;
+        document.getElementById("nameModal").style.display = "flex";
+    }
     
     async function register() {
-        if (isBanned(myId)) return;
         try {
             await fetch(`${FIREBASE_URL}peers/${myId}.json`, {
                 method: 'PUT',
@@ -155,20 +243,53 @@
         try {
             const resp = await fetch(`${FIREBASE_URL}peers.json`);
             const peers = await resp.json() || {};
-            let online = 0;
+            let online = [];
             for (let id in peers) {
-                if (id !== myId && !isBanned(id) && (Date.now()/1000 - peers[id].last_seen) < 60) online++;
+                if (id !== myId && (Date.now()/1000 - peers[id].last_seen) < 60) {
+                    online.push({ id, name: peers[id].name || id });
+                }
             }
-            document.getElementById("onlineCount").innerHTML = `🖧 Онлайн: ${online}`;
+            document.getElementById("onlineCount").innerHTML = `🖧 Онлайн: ${online.length}`;
+            
+            let html = '';
+            for (let u of online) {
+                const active = (currentChat === u.id) ? 'active' : '';
+                html += `<div class="online-user ${active}" onclick="switchToDM('${u.id}', '${u.name.replace(/'/g, "\\'")}')">
+                    <div class="user-status"></div>
+                    <div class="user-name">${escapeHtml(u.name)}</div>
+                </div>`;
+            }
+            document.getElementById("onlineList").innerHTML = html || '<div>🤷‍♂️ Никого нет</div>';
         } catch(e) {}
         setTimeout(updateOnline, 10000);
+    }
+    
+    function switchToGlobal() {
+        currentChat = 'global';
+        currentChatName = 'Общий чат';
+        document.getElementById("chatTitle").innerHTML = '🌍 Общий чат';
+        document.getElementById("backBtn").style.display = 'none';
+        document.getElementById("messages").innerHTML = '';
+        processedMessages.clear();
+        loadMessages();
+        closeSidebar();
+    }
+    
+    function switchToDM(userId, userName) {
+        currentChat = userId;
+        currentChatName = userName;
+        document.getElementById("chatTitle").innerHTML = `💬 ${escapeHtml(userName)}`;
+        document.getElementById("backBtn").style.display = 'inline-block';
+        document.getElementById("messages").innerHTML = '';
+        processedMessages.clear();
+        loadMessages();
+        closeSidebar();
     }
     
     async function sendMessage() {
         const input = document.getElementById("messageInput");
         const text = input.value.trim();
         if (!text) return;
-        if (isBanned(myId)) { alert("⚠️ Вы забанены!"); return; }
         
         let replyData = null;
         if (replyTo) {
@@ -182,7 +303,7 @@
         const message = {
             from: myId,
             fromName: myName,
-            to: "global",
+            to: currentChat,
             text: text,
             time: Date.now() / 1000,
             reply: replyData
@@ -201,18 +322,27 @@
         try {
             const resp = await fetch(`${FIREBASE_URL}messages.json`);
             const msgs = await resp.json() || {};
-            let newMessages = [];
+            let relevant = [];
             for (let id in msgs) {
-                if (!processedMessages.has(id) && msgs[id].to === "global" && !isBanned(msgs[id].from)) {
-                    newMessages.push({ id, ...msgs[id] });
+                if (processedMessages.has(id)) continue;
+                const msg = msgs[id];
+                let isRelevant = false;
+                if (currentChat === 'global') {
+                    isRelevant = (msg.to === 'global');
+                } else {
+                    isRelevant = (msg.from === myId && msg.to === currentChat) ||
+                                 (msg.from === currentChat && msg.to === myId);
                 }
+                if (isRelevant && msg.text) relevant.push({ id, ...msg });
             }
-            newMessages.sort((a, b) => a.time - b.time);
-            for (let msg of newMessages) {
+            relevant.sort((a, b) => a.time - b.time);
+            for (let msg of relevant) {
                 const isOwn = msg.from === myId;
                 const senderName = isOwn ? myName : (msg.fromName || msg.from);
                 addMessageToScreen(senderName, msg.text, isOwn, msg);
                 processedMessages.add(msg.id);
+                messagesCache.push(msg);
+                if (messagesCache.length > 200) messagesCache.shift();
             }
         } catch(e) {}
         setTimeout(loadMessages, 2000);
@@ -220,16 +350,14 @@
     
     function addMessageToScreen(senderName, text, isOwn, fullMsg) {
         const container = document.getElementById("messages");
-        if (container.children.length === 0) container.innerHTML = "";
-        
         const msgDiv = document.createElement("div");
         msgDiv.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
         
         let replyHtml = "";
         if (fullMsg && fullMsg.reply) {
-            const replySender = fullMsg.reply.senderName || fullMsg.reply.sender;
-            replyHtml = `<div class="reply-badge">↩️ Ответ на ${replySender}: "${fullMsg.reply.text.substring(0, 50)}"</div>`;
+            const rs = fullMsg.reply.senderName || fullMsg.reply.sender;
+            replyHtml = `<div class="reply-badge">↩️ Ответ ${rs}: "${fullMsg.reply.text.substring(0, 50)}"</div>`;
         }
         
         msgDiv.innerHTML = `
@@ -239,8 +367,7 @@
             <div class="message-time">${time}</div>
         `;
         
-        if (!isOwn) {
-            msgDiv.style.cursor = "pointer";
+        if (!isOwn && fullMsg && fullMsg.from) {
             msgDiv.onclick = () => setReply(fullMsg);
         }
         
@@ -249,7 +376,7 @@
     }
     
     function setReply(msg) {
-        if (!msg || msg.from === myId) return;
+        if (msg.from === myId) return;
         replyTo = {
             id: msg.id,
             text: msg.text,
@@ -265,10 +392,27 @@
         document.getElementById("replyPreview").style.display = "none";
     }
     
+    async function changeName() {
+        const newName = document.getElementById("newName").value.trim();
+        if (newName) {
+            myName = newName;
+            localStorage.setItem('jnet_name', myName);
+            document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`;
+            await register();
+            closeModal();
+        }
+    }
+    
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
     }
+    
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 767 && currentChat !== 'global') {
+            document.getElementById("backBtn").style.display = 'inline-block';
+        }
+    });
     
     register();
     updateOnline();
