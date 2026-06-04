@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JNet</title>
+    <title>JNet - Республика Жакид</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -181,6 +181,7 @@
             border-radius: 20px;
             word-wrap: break-word;
             position: relative;
+            cursor: pointer;
         }
         
         .message-own {
@@ -191,7 +192,6 @@
         .message-other {
             align-self: flex-start;
             border-bottom-left-radius: 4px;
-            cursor: pointer;
         }
         
         .message-sender {
@@ -461,7 +461,7 @@
 
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <h3>UP JNet</h3>
+        <h3>🇯🇴 JNet</h3>
         <p id="myInfo">Загрузка...</p>
     </div>
     <div class="sidebar-item" onclick="switchToGlobal(); closeSidebar();">
@@ -477,7 +477,7 @@
         <div style="padding: 20px; text-align: center;">Загрузка...</div>
     </div>
     <div class="sidebar-item" onclick="openNameModal(); closeSidebar();">
-        <span>✏️</span> Сменить никнейм
+        <span>✏️</span> Сменить имя
     </div>
 </div>
 
@@ -488,7 +488,7 @@
         <button class="back-btn" id="backBtn" onclick="switchToGlobal()" style="display: none;">←</button>
     </div>
     <div class="status-bar">
-        <span>Великая Республика Жакид</span>
+        <span>🇯🇴 Республика Жакид</span>
         <span class="online-count" id="onlineCount">🖧 0</span>
     </div>
     
@@ -525,8 +525,8 @@
         <select id="themeSelect">
             <option value="dark">🌙 Тёмная</option>
             <option value="light">☀️ Светлая</option>
-            <option value="neon">💚 Неоновая</option>
-            <option value="military">🪖 Military</option>
+            <option value="neon">💚 Неон</option>
+            <option value="military">🪖 Военная</option>
         </select>
         <button onclick="setTheme()">Применить</button>
         <button onclick="closeModal('themeModal')">Отмена</button>
@@ -878,22 +878,29 @@
             <div class="message-time">${time}</div>
         `;
         
-        if (!isOwn && fullMsg && fullMsg.from && fullMsg.from !== myId) {
-            msgDiv.style.cursor = "pointer";
-            msgDiv.onclick = () => setReply(fullMsg);
-        }
+        // Сохраняем данные сообщения для ответа
+        const msgData = {
+            id: fullMsg?.id,
+            text: text,
+            from: fullMsg?.from || (isOwn ? myId : 'unknown'),
+            fromName: senderName
+        };
+        
+        msgDiv.onclick = (function(data) {
+            return function() { setReply(data); };
+        })(msgData);
         
         container.appendChild(msgDiv);
         container.scrollTop = container.scrollHeight;
     }
     
     function setReply(msg) {
-        if (msg.from === myId) return;
+        // Можно отвечать на ЛЮБОЕ сообщение (и своё, и чужое)
         replyTo = {
             id: msg.id,
             text: msg.text,
             sender: msg.from,
-            senderName: msg.fromName || msg.from
+            senderName: msg.fromName
         };
         document.getElementById("replyText").innerHTML = `${replyTo.senderName}: "${replyTo.text.substring(0, 40)}"`;
         document.getElementById("replyPreview").style.display = "flex";
