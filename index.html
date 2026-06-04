@@ -2,33 +2,278 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>МикронацииВики</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>JNet - Республика Жакид</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f1e;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #0f6e6e, #0a5a5a);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        .header h1 { font-size: 1.2rem; }
+        .status-bar {
+            background: #0f1420;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #aaa;
+            border-bottom: 1px solid #2a2f40;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 10px 12px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            position: relative;
+        }
+        .message-own { align-self: flex-end; background: #0f6e6e; color: white; border-bottom-right-radius: 5px; }
+        .message-other { align-self: flex-start; background: #2a2f40; color: #e0e0e0; border-bottom-left-radius: 5px; }
+        .message-sender { font-size: 0.65rem; opacity: 0.8; margin-bottom: 4px; }
+        .message-text { font-size: 0.9rem; line-height: 1.4; }
+        .message-time { font-size: 0.55rem; opacity: 0.5; margin-top: 4px; }
+        .reply-badge {
+            font-size: 0.65rem;
+            background: rgba(255,255,255,0.1);
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            display: inline-block;
+        }
+        .input-area {
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+            background: #0f1420;
+            border-top: 1px solid #2a2f40;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            background: #2a2f40;
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+        }
+        .input-area button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: #0f6e6e;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .reply-preview {
+            background: #1a2a2a;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #2a2f40;
+        }
+        .cancel-reply {
+            background: none;
+            border: none;
+            color: #ff8888;
+            cursor: pointer;
+        }
+        .online-count { color: #00ffcc; }
+        @media (max-width: 600px) {
+            .message { max-width: 90%; }
+        }
+    </style>
 </head>
 <body>
     <div class="header">
-        <h1>🌍 МикронацииВики</h1>
-        <p>Свободная энциклопедия микронаций</p>
-        <div class="github-info">
-            🔒 Все изменения через <a href="https://github.com/kitten2008/kitten2008.github.io" target="_blank">репозиторий GitHub</a>
-        </div>
+        <h1>🌍 JNet — Общий чат</h1>
+        <div style="width: 40px;"></div>
+    </div>
+    <div class="status-bar">
+        <span>🇯🇴 Республика Жакид</span>
+        <span class="online-count" id="onlineCount">🖧 Онлайн: 0</span>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div id="replyPreview" class="reply-preview" style="display: none;">
+        <span>📎 Ответ на: <span id="replyText"></span></span>
+        <button class="cancel-reply" onclick="cancelReply()">✖</button>
+    </div>
+    <div class="input-area">
+        <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">📡</button>
     </div>
 
-    <div class="search">
-        <input type="text" id="searchInput" placeholder="Поиск микронаций...">
-    </div>
-
-    <div class="microlist" id="microlist">
-        <!-- Список будет загружаться из JSON -->
-    </div>
-
-    <div class="footer">
-        <a href="https://github.com/kitten2008/kitten2008.github.io" class="github-link">
-            📝 Редактировать на GitHub → Предложить изменения
-        </a>
-    </div>
-
-    <script src="js/main.js"></script>
+<script>
+    const FIREBASE_URL = "https://jnet-3359c-default-rtdb.firebaseio.com/";
+    
+    let myId = localStorage.getItem('jnet_id');
+    if (!myId) {
+        myId = "JAK-" + Math.floor(Math.random() * 9000 + 1000);
+        localStorage.setItem('jnet_id', myId);
+    }
+    let myName = localStorage.getItem('jnet_name') || myId;
+    
+    let replyTo = null;
+    let processedMessages = new Set();
+    let bannedUsers = JSON.parse(localStorage.getItem('jnet_banned') || '[]');
+    
+    function isBanned(id) { return bannedUsers.includes(id); }
+    
+    async function register() {
+        if (isBanned(myId)) return;
+        try {
+            await fetch(`${FIREBASE_URL}peers/${myId}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: myId, name: myName, last_seen: Date.now() / 1000 })
+            });
+        } catch(e) {}
+    }
+    
+    async function updateOnline() {
+        try {
+            const resp = await fetch(`${FIREBASE_URL}peers.json`);
+            const peers = await resp.json() || {};
+            let online = 0;
+            for (let id in peers) {
+                if (id !== myId && !isBanned(id) && (Date.now()/1000 - peers[id].last_seen) < 60) online++;
+            }
+            document.getElementById("onlineCount").innerHTML = `🖧 Онлайн: ${online}`;
+        } catch(e) {}
+        setTimeout(updateOnline, 10000);
+    }
+    
+    async function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const text = input.value.trim();
+        if (!text) return;
+        if (isBanned(myId)) { alert("⚠️ Вы забанены!"); return; }
+        
+        let replyData = null;
+        if (replyTo) {
+            replyData = replyTo;
+            cancelReply();
+        }
+        
+        addMessageToScreen(myName, text, true, null);
+        input.value = "";
+        
+        const message = {
+            from: myId,
+            fromName: myName,
+            to: "global",
+            text: text,
+            time: Date.now() / 1000,
+            reply: replyData
+        };
+        
+        try {
+            await fetch(`${FIREBASE_URL}messages.json`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+            });
+        } catch(e) {}
+    }
+    
+    async function loadMessages() {
+        try {
+            const resp = await fetch(`${FIREBASE_URL}messages.json`);
+            const msgs = await resp.json() || {};
+            let newMessages = [];
+            for (let id in msgs) {
+                if (!processedMessages.has(id) && msgs[id].to === "global" && !isBanned(msgs[id].from)) {
+                    newMessages.push({ id, ...msgs[id] });
+                }
+            }
+            newMessages.sort((a, b) => a.time - b.time);
+            for (let msg of newMessages) {
+                const isOwn = msg.from === myId;
+                const senderName = isOwn ? myName : (msg.fromName || msg.from);
+                addMessageToScreen(senderName, msg.text, isOwn, msg);
+                processedMessages.add(msg.id);
+            }
+        } catch(e) {}
+        setTimeout(loadMessages, 2000);
+    }
+    
+    function addMessageToScreen(senderName, text, isOwn, fullMsg) {
+        const container = document.getElementById("messages");
+        if (container.children.length === 0) container.innerHTML = "";
+        
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        let replyHtml = "";
+        if (fullMsg && fullMsg.reply) {
+            const replySender = fullMsg.reply.senderName || fullMsg.reply.sender;
+            replyHtml = `<div class="reply-badge">↩️ Ответ на ${replySender}: "${fullMsg.reply.text.substring(0, 50)}"</div>`;
+        }
+        
+        msgDiv.innerHTML = `
+            <div class="message-sender">${escapeHtml(senderName)}</div>
+            ${replyHtml}
+            <div class="message-text">${escapeHtml(text)}</div>
+            <div class="message-time">${time}</div>
+        `;
+        
+        if (!isOwn) {
+            msgDiv.style.cursor = "pointer";
+            msgDiv.onclick = () => setReply(fullMsg);
+        }
+        
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    function setReply(msg) {
+        if (!msg || msg.from === myId) return;
+        replyTo = {
+            id: msg.id,
+            text: msg.text,
+            sender: msg.from,
+            senderName: msg.fromName || msg.from
+        };
+        document.getElementById("replyText").innerHTML = `${replyTo.senderName}: "${replyTo.text.substring(0, 50)}"`;
+        document.getElementById("replyPreview").style.display = "flex";
+    }
+    
+    function cancelReply() {
+        replyTo = null;
+        document.getElementById("replyPreview").style.display = "none";
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
+    }
+    
+    register();
+    updateOnline();
+    loadMessages();
+    setInterval(register, 30000);
+</script>
 </body>
 </html>
