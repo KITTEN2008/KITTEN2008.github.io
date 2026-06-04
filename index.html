@@ -219,7 +219,7 @@
         
         .toast {
             position: fixed;
-            bottom: 70px;
+            bottom: 80px;
             left: 16px;
             right: 16px;
             background: #1a1f2e;
@@ -230,7 +230,7 @@
             align-items: center;
             gap: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 100;
+            z-index: 200;
             transform: translateY(0);
             transition: transform 0.3s ease;
         }
@@ -243,7 +243,20 @@
         .toast-content { flex: 1; }
         .toast-title { font-weight: bold; font-size: 0.85rem; }
         .toast-text { font-size: 0.75rem; opacity: 0.8; margin-top: 2px; }
-        .toast-close { background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; }
+        .toast-close { 
+            background: none; 
+            border: none; 
+            color: #aaa; 
+            font-size: 1.2rem; 
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .toast-close:active { background: rgba(255,255,255,0.1); }
         
         .sidebar {
             position: fixed;
@@ -462,17 +475,24 @@
 <script>
     const FIREBASE_URL = "https://jnet-3359c-default-rtdb.firebaseio.com/";
     
-    let myId = localStorage.getItem('jnet_id');
+    // ========== ПОСТОЯННЫЙ ID (сохраняется навсегда) ==========
+    let myId = localStorage.getItem('jnet_permanent_id');
     if (!myId) {
         myId = "JAK-" + Math.floor(Math.random() * 9000 + 1000);
-        localStorage.setItem('jnet_id', myId);
+        localStorage.setItem('jnet_permanent_id', myId);
     }
-    let myName = localStorage.getItem('jnet_name') || myId;
+    
+    let myName = localStorage.getItem('jnet_name');
+    if (!myName) {
+        myName = myId;
+        localStorage.setItem('jnet_name', myName);
+    }
     
     let currentChat = 'global';
     let currentChatName = 'Общий чат';
     let replyTo = null;
     let processedMessages = new Set();
+    let notifiedMessages = new Set();
     let bannedUsers = JSON.parse(localStorage.getItem('jnet_banned') || '[]');
     
     let unreadCounts = {};
@@ -499,12 +519,16 @@
         document.getElementById("toastText").innerHTML = text;
         const toast = document.getElementById("toast");
         toast.classList.remove("hide");
-        setTimeout(() => hideToast(), 3000);
-        playSound();
+        
+        // Автоскрытие через 3 секунды
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => hideToast(), 3000);
     }
     
     function hideToast() {
-        document.getElementById("toast").classList.add("hide");
+        const toast = document.getElementById("toast");
+        toast.classList.add("hide");
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
     }
     
     function updateUnreadBadges() {
@@ -516,7 +540,6 @@
             badge.style.display = "none";
         }
         
-        // Обновляем в списке пользователей
         const users = document.querySelectorAll('.online-user');
         users.forEach(user => {
             const userId = user.getAttribute('data-id');
@@ -691,9 +714,6 @@
         setTimeout(loadMessages, 2000);
     }
     
-    // Отдельный слушатель для уведомлений
-    let notifiedMessages = new Set();
-    
     async function checkNotifications() {
         try {
             const resp = await fetch(`${FIREBASE_URL}messages.json`);
@@ -702,11 +722,14 @@
                 if (notifiedMessages.has(id)) continue;
                 const msg = msgs[id];
                 if (isBanned(msg.from)) continue;
-                if (msg.from === myId) continue;
+                if (msg.from === myId) {
+                    notifiedMessages.add(id);
+                    continue;
+                }
                 
                 const isForMe = (msg.to === myId);
                 const isReplyToMe = (msg.reply && msg.reply.sender === myId);
-                const isGlobalWhenInDM = (msg.to === 'global' && currentChat !== 'global');
+                const isGlobalWhenInDM = (msg.to === 'global' && currentChat !== 'global' && currentChat !== 'global');
                 
                 if (isForMe && currentChat !== msg.from) {
                     if (!unreadCounts[msg.from]) unreadCounts[msg.from] = 0;
@@ -818,6 +841,8 @@
             else markAsRead(currentChat);
         }
     });
+    
+    document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`;
     
     register();
     updateOnline();
