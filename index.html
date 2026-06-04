@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JNet - Республика Жакид (голосовые, картинки, авто-удаление)</title>
+    <title>JNet - Республика Жакид (видео 15 сек)</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -27,6 +27,7 @@
         body.theme-dark .status-bar { background: #0f1420; }
         body.theme-dark .modal-content { background: #1a1f2e; }
         body.theme-dark .toast { background: #1a1f2e; }
+        body.theme-dark .recording-modal { background: #1a1f2e; }
         
         body.theme-light { background: #f0f2f5; color: #1a1a2e; }
         body.theme-light .header { background: linear-gradient(135deg, #0f6e6e, #0a5a5a); color: white; }
@@ -36,6 +37,7 @@
         body.theme-light .sidebar { background: white; }
         body.theme-light .status-bar { background: #e4e6eb; }
         body.theme-light .modal-content { background: white; }
+        body.theme-light .recording-modal { background: white; }
         
         body.theme-neon { background: #000; color: #00ffcc; }
         body.theme-neon .header { background: linear-gradient(135deg, #00aa88, #008866); }
@@ -87,7 +89,6 @@
             background: #ff4444;
             color: white;
             font-size: 10px;
-            font-weight: bold;
             min-width: 18px;
             height: 18px;
             border-radius: 18px;
@@ -112,7 +113,6 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            -webkit-overflow-scrolling: touch;
         }
         
         .message {
@@ -130,8 +130,9 @@
         .message-sender { font-size: 0.65rem; opacity: 0.8; margin-bottom: 4px; }
         .message-text { font-size: 0.95rem; line-height: 1.4; }
         .message-time { font-size: 0.55rem; opacity: 0.5; margin-top: 4px; }
-        .message-image { max-width: 200px; max-height: 200px; border-radius: 12px; margin-top: 5px; cursor: pointer; }
-        .message-audio { max-width: 200px; margin-top: 5px; border-radius: 20px; }
+        .message-image { max-width: 200px; max-height: 200px; border-radius: 12px; margin-top: 5px; }
+        .message-audio { max-width: 200px; margin-top: 5px; }
+        .message-video { max-width: 250px; max-height: 250px; border-radius: 12px; margin-top: 5px; background: #000; }
         
         .expiry-badge {
             font-size: 0.55rem;
@@ -160,8 +161,7 @@
             z-index: 10;
         }
         
-        .message:hover .message-actions,
-        .message:active .message-actions { display: flex; }
+        .message:hover .message-actions { display: flex; }
         
         .msg-action {
             background: none;
@@ -204,14 +204,12 @@
             color: white;
             font-size: 1.2rem;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .record-btn { background: #8b0000; }
         .record-btn.recording { background: #ff4444; animation: pulse 1s infinite; }
         .image-btn { background: #2a2f40; }
+        .video-btn { background: #2a2f40; }
         
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -258,7 +256,7 @@
             gap: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             z-index: 1000;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: opacity 0.3s ease;
             min-width: 200px;
             max-width: 90%;
         }
@@ -381,6 +379,46 @@
             cursor: pointer;
         }
         
+        /* Модалка записи видео */
+        .recording-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .recording-modal video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 20px;
+            background: #000;
+        }
+        
+        .recording-modal .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .recording-modal button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        
+        .recording-modal .start-btn { background: #0f6e6e; color: white; }
+        .recording-modal .stop-btn { background: #8b0000; color: white; display: none; }
+        .recording-modal .close-btn { background: #2a2f40; color: white; }
+        
         .online-count { color: #00ffcc; }
         .empty-chat { text-align: center; padding: 40px 20px; color: #6a6f80; }
         
@@ -404,9 +442,9 @@
         <p id="myInfo">Загрузка...</p>
     </div>
     <div class="sidebar-item" onclick="switchToGlobal(); closeSidebar();">🌍 Общий чат</div>
-    <div class="sidebar-item" onclick="openThemeModal(); closeSidebar();">🎨 Тема оформления</div>
+    <div class="sidebar-item" onclick="openThemeModal(); closeSidebar();">🎨 Тема</div>
     <div style="padding: 12px 20px; font-size: 0.7rem; color: #aaa;">👥 Личные сообщения</div>
-    <div class="online-users" id="onlineList"><div style="padding: 20px; text-align: center;">Загрузка...</div></div>
+    <div class="online-users" id="onlineList"><div style="padding: 20px;">Загрузка...</div></div>
     <div class="sidebar-item" onclick="openNameModal(); closeSidebar();">✏️ Сменить имя</div>
 </div>
 
@@ -432,14 +470,16 @@
         <div class="input-area">
             <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button id="sendBtn" onclick="sendMessage()">📨</button>
-            <button id="imageBtn" class="image-btn" style="width:48px;height:48px;">🖼️</button>
-            <button id="recordBtn" class="record-btn" style="width:48px;height:48px;">🎤</button>
+            <button id="imageBtn" class="image-btn">🖼️</button>
+            <button id="videoBtn" class="video-btn">🎥</button>
+            <button id="recordBtn" class="record-btn">🎤</button>
         </div>
         <div id="recordTimer" class="record-timer" style="display:none;"></div>
     </div>
 </div>
 
 <input type="file" id="imageInput" accept="image/*" style="display:none">
+<input type="file" id="videoFileInput" accept="video/*" style="display:none">
 
 <div id="toast" class="toast hide">
     <div class="toast-icon" id="toastIcon">📩</div>
@@ -449,8 +489,8 @@
 
 <div id="forwardModal" class="modal">
     <div class="modal-content">
-        <h3>📤 Переслать сообщение</h3>
-        <select id="forwardTargetSelect" style="width:100%; padding:12px; margin:15px 0;">
+        <h3>📤 Переслать</h3>
+        <select id="forwardTargetSelect" style="width:100%; padding:12px;">
             <option value="global">🌍 Общий чат</option>
         </select>
         <button onclick="confirmForward()">Переслать</button>
@@ -467,7 +507,7 @@
 
 <div id="themeModal" class="modal">
     <div class="modal-content">
-        <h3>🎨 Выберите тему</h3>
+        <h3>🎨 Тема</h3>
         <select id="themeSelect">
             <option value="dark">🌙 Тёмная</option>
             <option value="light">☀️ Светлая</option>
@@ -488,22 +528,30 @@
     </div>
 </div>
 
+<!-- Модалка записи видео с камеры -->
+<div id="cameraModal" class="recording-modal" style="display: none;">
+    <video id="cameraPreview" autoplay playsinline muted></video>
+    <div class="controls">
+        <button id="startCameraBtn" class="start-btn">🎥 Записать</button>
+        <button id="stopCameraBtn" class="stop-btn">⏹️ Остановить</button>
+        <button id="closeCameraBtn" class="close-btn">✖ Закрыть</button>
+    </div>
+    <div id="cameraTimer" style="margin-top: 15px; font-size: 1.2rem; color: #ff8888;"></div>
+</div>
+
 <script>
     const FIREBASE_URL = "https://jnet-3359c-default-rtdb.firebaseio.com/";
-    const VOICE_EXPIRY_HOURS = 4;
-    const VOICE_EXPIRY_MS = VOICE_EXPIRY_HOURS * 60 * 60 * 1000;
+    
+    const AUDIO_IMAGE_EXPIRY_MS = 4 * 60 * 60 * 1000;
+    const VIDEO_EXPIRY_MS = 1 * 60 * 60 * 1000;
+    const MAX_VIDEO_SECONDS = 15;
     
     let myId = localStorage.getItem('jnet_permanent_id');
     if (!myId) {
         myId = "JAK-" + Math.floor(Math.random() * 9000 + 1000);
         localStorage.setItem('jnet_permanent_id', myId);
     }
-    
-    let myName = localStorage.getItem('jnet_name');
-    if (!myName) {
-        myName = myId;
-        localStorage.setItem('jnet_name', myName);
-    }
+    let myName = localStorage.getItem('jnet_name') || myId;
     
     let currentChat = 'global';
     let currentChatName = 'Общий чат';
@@ -513,76 +561,225 @@
     let notifiedMessages = new Set();
     let bannedUsers = JSON.parse(localStorage.getItem('jnet_banned') || '[]');
     let onlineUsers = [];
-    
     let unreadCounts = {};
     let totalUnread = 0;
     
-    // ========== АВТО-УДАЛЕНИЕ ПРОСРОЧЕННЫХ ГОЛОСОВЫХ И КАРТИНОК ==========
-    async function deleteExpiredMediaMessages() {
+    // ========== ЗАПИСЬ ВИДЕО С КАМЕРЫ ==========
+    let mediaStream = null;
+    let mediaRecorderVideo = null;
+    let videoChunks = [];
+    let isVideoRecording = false;
+    let videoStartTime = null;
+    let videoTimerInterval = null;
+    
+    async function openCameraModal() {
+        const modal = document.getElementById('cameraModal');
+        const video = document.getElementById('cameraPreview');
+        
+        try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            video.srcObject = mediaStream;
+            modal.style.display = 'flex';
+            
+            document.getElementById('startCameraBtn').style.display = 'block';
+            document.getElementById('stopCameraBtn').style.display = 'none';
+            document.getElementById('cameraTimer').innerHTML = '';
+        } catch(e) {
+            showToast("❌ Нет доступа к камере", "🎥");
+        }
+    }
+    
+    function startVideoRecording() {
+        if (!mediaStream) return;
+        
+        videoChunks = [];
+        mediaRecorderVideo = new MediaRecorder(mediaStream, { mimeType: 'video/webm' });
+        
+        mediaRecorderVideo.ondataavailable = (event) => {
+            if (event.data.size > 0) videoChunks.push(event.data);
+        };
+        
+        mediaRecorderVideo.onstop = async () => {
+            const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                await sendVideoFromBlob(reader.result);
+            };
+            reader.readAsDataURL(videoBlob);
+            
+            if (videoTimerInterval) clearInterval(videoTimerInterval);
+            document.getElementById('cameraTimer').innerHTML = '';
+            document.getElementById('startCameraBtn').style.display = 'block';
+            document.getElementById('stopCameraBtn').style.display = 'none';
+            isVideoRecording = false;
+        };
+        
+        mediaRecorderVideo.start(100);
+        isVideoRecording = true;
+        videoStartTime = Date.now();
+        
+        document.getElementById('startCameraBtn').style.display = 'none';
+        document.getElementById('stopCameraBtn').style.display = 'block';
+        
+        videoTimerInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - videoStartTime) / 1000);
+            document.getElementById('cameraTimer').innerHTML = `⏱️ Запись: ${elapsed} сек / ${MAX_VIDEO_SECONDS} сек`;
+            if (elapsed >= MAX_VIDEO_SECONDS) stopVideoRecording();
+        }, 1000);
+    }
+    
+    function stopVideoRecording() {
+        if (mediaRecorderVideo && isVideoRecording) {
+            mediaRecorderVideo.stop();
+        }
+    }
+    
+    function closeCameraModal() {
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            mediaStream = null;
+        }
+        if (videoTimerInterval) clearInterval(videoTimerInterval);
+        document.getElementById('cameraModal').style.display = 'none';
+        document.getElementById('cameraPreview').srcObject = null;
+        isVideoRecording = false;
+    }
+    
+    async function sendVideoFromBlob(videoData) {
+        if (!videoData) return;
+        if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
+        
+        let replyData = null;
+        if (replyTo) { replyData = replyTo; cancelReply(); }
+        
+        const expiresAt = Date.now() + VIDEO_EXPIRY_MS;
+        addVideoMessageToScreen(myName, videoData, true, null, expiresAt);
+        
+        const message = {
+            from: myId, fromName: myName, to: currentChat,
+            type: 'video', videoData: videoData,
+            time: Date.now() / 1000, expiresAt: expiresAt, reply: replyData
+        };
+        try { await fetch(`${FIREBASE_URL}messages.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) }); }
+        catch(e) { showToast("❌ Ошибка отправки", "❌"); }
+    }
+    
+    // ========== АВТО-УДАЛЕНИЕ ==========
+    async function deleteExpiredMedia() {
         try {
             const resp = await fetch(`${FIREBASE_URL}messages.json`);
             const msgs = await resp.json() || {};
             const now = Date.now();
             let deleted = 0;
-            
             for (let id in msgs) {
                 const msg = msgs[id];
-                // Удаляем голосовые И картинки, у которых истёк срок
-                if ((msg.type === 'audio' || msg.type === 'image') && msg.expiresAt && msg.expiresAt < now) {
+                if (msg.expiresAt && msg.expiresAt < now) {
                     await fetch(`${FIREBASE_URL}messages/${id}.json`, { method: 'DELETE' });
                     deleted++;
-                    if (processedMessages.has(id)) processedMessages.delete(id);
-                    if (notifiedMessages.has(id)) notifiedMessages.delete(id);
+                    processedMessages.delete(id);
+                    notifiedMessages.delete(id);
                 }
             }
-            
-            if (deleted > 0) {
-                console.log(`🗑️ Удалено ${deleted} просроченных сообщений (картинки/аудио)`);
-                loadMessages();
-            }
-        } catch(e) { console.log("Ошибка удаления:", e); }
+            if (deleted > 0) { console.log(`🗑️ Удалено ${deleted} сообщений`); loadMessages(); }
+        } catch(e) {}
     }
+    setInterval(deleteExpiredMedia, 30 * 60 * 1000);
+    setTimeout(deleteExpiredMedia, 5000);
     
-    setInterval(deleteExpiredMediaMessages, 30 * 60 * 1000);
-    setTimeout(deleteExpiredMediaMessages, 5000);
-    
-    // ========== ОТПРАВКА КАРТИНКИ ==========
-    async function sendImage(file) {
+    // ========== ОТПРАВКА ВИДЕО ИЗ ФАЙЛА ==========
+    async function sendVideoFile(file) {
         if (!file) return;
         if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
         
-        // Сжимаем изображение перед отправкой
-        const compressedBase64 = await compressImage(file);
-        if (!compressedBase64) return;
-        
-        let replyData = null;
-        if (replyTo) {
-            replyData = replyTo;
-            cancelReply();
+        const duration = await getVideoDuration(file);
+        if (duration > MAX_VIDEO_SECONDS) {
+            showToast(`❌ Видео длиннее ${MAX_VIDEO_SECONDS} сек`, "🎥");
+            return;
         }
         
-        const expiresAt = Date.now() + VOICE_EXPIRY_MS;
+        const compressed = await compressVideoFile(file);
+        if (!compressed) return;
         
-        addImageMessageToScreen(myName, compressedBase64, true, null, expiresAt);
+        let replyData = null;
+        if (replyTo) { replyData = replyTo; cancelReply(); }
+        
+        const expiresAt = Date.now() + VIDEO_EXPIRY_MS;
+        addVideoMessageToScreen(myName, compressed, true, null, expiresAt);
         
         const message = {
-            from: myId,
-            fromName: myName,
-            to: currentChat,
-            type: 'image',
-            imageData: compressedBase64,
-            time: Date.now() / 1000,
-            expiresAt: expiresAt,
-            reply: replyData
+            from: myId, fromName: myName, to: currentChat,
+            type: 'video', videoData: compressed,
+            time: Date.now() / 1000, expiresAt: expiresAt, reply: replyData
         };
+        await fetch(`${FIREBASE_URL}messages.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
+    }
+    
+    function getVideoDuration(file) {
+        return new Promise((resolve) => {
+            const url = URL.createObjectURL(file);
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            video.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(video.duration); };
+            video.onerror = () => { URL.revokeObjectURL(url); resolve(999); };
+            video.src = url;
+        });
+    }
+    
+    function compressVideoFile(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    function addVideoMessageToScreen(senderName, videoData, isOwn, fullMsg, expiresAt) {
+        const container = document.getElementById("messages");
+        if (container.children.length === 1 && container.children[0].classList?.contains('empty-chat')) container.innerHTML = "";
         
-        try {
-            await fetch(`${FIREBASE_URL}messages.json`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(message)
-            });
-        } catch(e) {}
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
+        const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        
+        let replyHtml = "";
+        if (fullMsg && fullMsg.reply) {
+            const rs = fullMsg.reply.senderName || fullMsg.reply.sender;
+            replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}</div>`;
+        }
+        
+        const expiryDate = new Date(expiresAt);
+        const expiryTime = `${expiryDate.getHours().toString().padStart(2,'0')}:${expiryDate.getMinutes().toString().padStart(2,'0')}`;
+        
+        msgDiv.innerHTML = `
+            <div class="message-sender">${escapeHtml(senderName)}</div>
+            ${replyHtml}
+            <video class="message-video" controls preload="metadata">
+                <source src="${videoData}" type="video/webm">
+            </video>
+            <div class="message-time">${time}</div>
+            <div class="expiry-badge">⏰ Удалится в ${expiryTime}</div>
+            <div class="message-actions">
+                <button class="msg-action" onclick="event.stopPropagation(); openForwardModal('${fullMsg?.id || ''}', '🎥 Видео', '${fullMsg?.from || ''}', '${escapeHtml(senderName).replace(/'/g, "\\'")}')">📤</button>
+                <button class="msg-action" onclick="event.stopPropagation(); setReply({id: '${fullMsg?.id || ''}', text: '🎥 Видео', from: '${fullMsg?.from || (isOwn ? myId : 'unknown')}', fromName: '${escapeHtml(senderName).replace(/'/g, "\\'")}'})">↩️</button>
+            </div>
+        `;
+        
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    // ========== КАРТИНКИ ==========
+    async function sendImage(file) {
+        if (!file) return;
+        if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
+        const compressed = await compressImage(file);
+        if (!compressed) return;
+        let replyData = null;
+        if (replyTo) { replyData = replyTo; cancelReply(); }
+        const expiresAt = Date.now() + AUDIO_IMAGE_EXPIRY_MS;
+        addImageMessageToScreen(myName, compressed, true, null, expiresAt);
+        const message = { from: myId, fromName: myName, to: currentChat, type: 'image', imageData: compressed, time: Date.now()/1000, expiresAt: expiresAt, reply: replyData };
+        await fetch(`${FIREBASE_URL}messages.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
     }
     
     function compressImage(file) {
@@ -592,22 +789,13 @@
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const maxSize = 800;
-                    if (width > height && width > maxSize) {
-                        height = (height * maxSize) / width;
-                        width = maxSize;
-                    } else if (height > maxSize) {
-                        width = (width * maxSize) / height;
-                        height = maxSize;
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressed = canvas.toDataURL('image/jpeg', 0.7);
-                    resolve(compressed);
+                    let w = img.width, h = img.height;
+                    const max = 800;
+                    if (w > h && w > max) { h = (h * max) / w; w = max; }
+                    else if (h > max) { w = (w * max) / h; h = max; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
                 };
                 img.src = e.target.result;
             };
@@ -618,372 +806,184 @@
     function addImageMessageToScreen(senderName, imageData, isOwn, fullMsg, expiresAt) {
         const container = document.getElementById("messages");
         if (container.children.length === 1 && container.children[0].classList?.contains('empty-chat')) container.innerHTML = "";
-        
         const msgDiv = document.createElement("div");
         msgDiv.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
         const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-        
         let replyHtml = "";
         if (fullMsg && fullMsg.reply) {
             const rs = fullMsg.reply.senderName || fullMsg.reply.sender;
-            replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}: "${escapeHtml(fullMsg.reply.text.substring(0, 40))}"</div>`;
+            replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}</div>`;
         }
-        
-        let expiryHtml = "";
-        if (expiresAt) {
-            const expiryDate = new Date(expiresAt);
-            const expiryTime = `${expiryDate.getHours().toString().padStart(2,'0')}:${expiryDate.getMinutes().toString().padStart(2,'0')}`;
-            expiryHtml = `<div class="expiry-badge">⏰ Удалится в ${expiryTime}</div>`;
-        }
-        
+        const expiryDate = new Date(expiresAt);
+        const expiryTime = `${expiryDate.getHours().toString().padStart(2,'0')}:${expiryDate.getMinutes().toString().padStart(2,'0')}`;
         msgDiv.innerHTML = `
-            <div class="message-sender">${escapeHtml(senderName)}</div>
-            ${replyHtml}
+            <div class="message-sender">${escapeHtml(senderName)}</div>${replyHtml}
             <img class="message-image" src="${imageData}" loading="lazy">
             <div class="message-time">${time}</div>
-            ${expiryHtml}
+            <div class="expiry-badge">⏰ Удалится в ${expiryTime}</div>
             <div class="message-actions">
                 <button class="msg-action" onclick="event.stopPropagation(); openForwardModal('${fullMsg?.id || ''}', '🖼️ Изображение', '${fullMsg?.from || ''}', '${escapeHtml(senderName).replace(/'/g, "\\'")}')">📤</button>
                 <button class="msg-action" onclick="event.stopPropagation(); setReply({id: '${fullMsg?.id || ''}', text: '🖼️ Изображение', from: '${fullMsg?.from || (isOwn ? myId : 'unknown')}', fromName: '${escapeHtml(senderName).replace(/'/g, "\\'")}'})">↩️</button>
             </div>
         `;
-        
-        const imgElement = msgDiv.querySelector('.message-image');
-        imgElement.onclick = (e) => {
-            e.stopPropagation();
-            document.getElementById('fullImageView').src = imageData;
-            document.getElementById('imageViewModal').style.display = 'flex';
-        };
-        
+        msgDiv.querySelector('.message-image').onclick = (e) => { e.stopPropagation(); document.getElementById('fullImageView').src = imageData; document.getElementById('imageViewModal').style.display = 'flex'; };
         container.appendChild(msgDiv);
         container.scrollTop = container.scrollHeight;
     }
     
-    // ========== ЗАПИСЬ ГОЛОСА ==========
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
-    let recordStartTime = null;
-    let recordTimerInterval = null;
+    // ========== ГОЛОСОВЫЕ ==========
+    let mediaRecorderAudio = null, audioChunks = [], isAudioRecording = false, audioStartTime = null, audioTimerInterval = null;
     const MAX_RECORD_SECONDS = 20;
     
-    async function startRecording() {
-        if (isRecording) return;
+    async function startAudioRecording() {
+        if (isAudioRecording) return;
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderAudio = new MediaRecorder(stream);
             audioChunks = [];
-            
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) audioChunks.push(event.data);
-            };
-            
-            mediaRecorder.onstop = async () => {
+            mediaRecorderAudio.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorderAudio.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const reader = new FileReader();
-                reader.onloadend = async () => {
-                    await sendAudioMessage(reader.result);
-                };
+                reader.onloadend = async () => await sendAudioMessage(reader.result);
                 reader.readAsDataURL(audioBlob);
-                stream.getTracks().forEach(track => track.stop());
+                stream.getTracks().forEach(t => t.stop());
             };
-            
-            mediaRecorder.start(100);
-            isRecording = true;
-            recordStartTime = Date.now();
-            
-            const recordBtn = document.getElementById('recordBtn');
-            recordBtn.classList.add('recording');
-            recordBtn.innerHTML = '⏹️';
-            
-            const timerDiv = document.getElementById('recordTimer');
-            timerDiv.style.display = 'block';
-            
-            recordTimerInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
-                timerDiv.innerHTML = `🎙️ Запись... ${elapsed} сек (макс ${MAX_RECORD_SECONDS})`;
-                if (elapsed >= MAX_RECORD_SECONDS) stopRecording();
+            mediaRecorderAudio.start(100);
+            isAudioRecording = true;
+            audioStartTime = Date.now();
+            document.getElementById('recordBtn').classList.add('recording');
+            document.getElementById('recordBtn').innerHTML = '⏹️';
+            document.getElementById('recordTimer').style.display = 'block';
+            audioTimerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - audioStartTime) / 1000);
+                document.getElementById('recordTimer').innerHTML = `🎙️ Запись... ${elapsed} сек (макс ${MAX_RECORD_SECONDS})`;
+                if (elapsed >= MAX_RECORD_SECONDS) stopAudioRecording();
             }, 1000);
-        } catch(e) {
-            showToast("❌ Нет доступа к микрофону", "🎤");
-        }
+        } catch(e) { showToast("❌ Нет доступа к микрофону", "🎤"); }
     }
     
-    function stopRecording() {
-        if (!isRecording || !mediaRecorder) return;
-        mediaRecorder.stop();
-        isRecording = false;
-        if (recordTimerInterval) clearInterval(recordTimerInterval);
-        const recordBtn = document.getElementById('recordBtn');
-        recordBtn.classList.remove('recording');
-        recordBtn.innerHTML = '🎤';
+    function stopAudioRecording() {
+        if (!isAudioRecording || !mediaRecorderAudio) return;
+        mediaRecorderAudio.stop();
+        isAudioRecording = false;
+        if (audioTimerInterval) clearInterval(audioTimerInterval);
+        document.getElementById('recordBtn').classList.remove('recording');
+        document.getElementById('recordBtn').innerHTML = '🎤';
         document.getElementById('recordTimer').style.display = 'none';
     }
     
     async function sendAudioMessage(base64Audio) {
         if (!base64Audio) return;
         if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
-        
         let replyData = null;
-        if (replyTo) {
-            replyData = replyTo;
-            cancelReply();
-        }
-        
-        const expiresAt = Date.now() + VOICE_EXPIRY_MS;
+        if (replyTo) { replyData = replyTo; cancelReply(); }
+        const expiresAt = Date.now() + AUDIO_IMAGE_EXPIRY_MS;
         addAudioMessageToScreen(myName, base64Audio, true, null, expiresAt);
-        
-        const message = {
-            from: myId,
-            fromName: myName,
-            to: currentChat,
-            type: 'audio',
-            audioData: base64Audio,
-            time: Date.now() / 1000,
-            expiresAt: expiresAt,
-            reply: replyData
-        };
-        
-        try {
-            await fetch(`${FIREBASE_URL}messages.json`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(message)
-            });
-        } catch(e) {}
+        const message = { from: myId, fromName: myName, to: currentChat, type: 'audio', audioData: base64Audio, time: Date.now()/1000, expiresAt: expiresAt, reply: replyData };
+        await fetch(`${FIREBASE_URL}messages.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
     }
     
     function addAudioMessageToScreen(senderName, audioData, isOwn, fullMsg, expiresAt) {
         const container = document.getElementById("messages");
         if (container.children.length === 1 && container.children[0].classList?.contains('empty-chat')) container.innerHTML = "";
-        
         const msgDiv = document.createElement("div");
         msgDiv.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
         const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-        
         let replyHtml = "";
         if (fullMsg && fullMsg.reply) {
             const rs = fullMsg.reply.senderName || fullMsg.reply.sender;
-            replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}: "${escapeHtml(fullMsg.reply.text.substring(0, 40))}"</div>`;
+            replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}</div>`;
         }
-        
-        let expiryHtml = "";
-        if (expiresAt) {
-            const expiryDate = new Date(expiresAt);
-            const expiryTime = `${expiryDate.getHours().toString().padStart(2,'0')}:${expiryDate.getMinutes().toString().padStart(2,'0')}`;
-            expiryHtml = `<div class="expiry-badge">⏰ Удалится в ${expiryTime}</div>`;
-        }
-        
+        const expiryDate = new Date(expiresAt);
+        const expiryTime = `${expiryDate.getHours().toString().padStart(2,'0')}:${expiryDate.getMinutes().toString().padStart(2,'0')}`;
         msgDiv.innerHTML = `
-            <div class="message-sender">${escapeHtml(senderName)}</div>
-            ${replyHtml}
+            <div class="message-sender">${escapeHtml(senderName)}</div>${replyHtml}
             <audio class="message-audio" controls src="${audioData}"></audio>
             <div class="message-time">${time}</div>
-            ${expiryHtml}
+            <div class="expiry-badge">⏰ Удалится в ${expiryTime}</div>
             <div class="message-actions">
-                <button class="msg-action" onclick="event.stopPropagation(); openForwardModal('${fullMsg?.id || ''}', '🎤 Аудиосообщение', '${fullMsg?.from || ''}', '${escapeHtml(senderName).replace(/'/g, "\\'")}')">📤</button>
-                <button class="msg-action" onclick="event.stopPropagation(); setReply({id: '${fullMsg?.id || ''}', text: '🎤 Аудиосообщение', from: '${fullMsg?.from || (isOwn ? myId : 'unknown')}', fromName: '${escapeHtml(senderName).replace(/'/g, "\\'")}'})">↩️</button>
+                <button class="msg-action" onclick="event.stopPropagation(); openForwardModal('${fullMsg?.id || ''}', '🎤 Аудио', '${fullMsg?.from || ''}', '${escapeHtml(senderName).replace(/'/g, "\\'")}')">📤</button>
+                <button class="msg-action" onclick="event.stopPropagation(); setReply({id: '${fullMsg?.id || ''}', text: '🎤 Аудио', from: '${fullMsg?.from || (isOwn ? myId : 'unknown')}', fromName: '${escapeHtml(senderName).replace(/'/g, "\\'")}'})">↩️</button>
             </div>
         `;
-        
         container.appendChild(msgDiv);
         container.scrollTop = container.scrollHeight;
     }
     
-    // ========== ТЕМЫ ==========
+    // ========== ОСНОВНЫЕ ФУНКЦИИ ==========
     const savedTheme = localStorage.getItem('jnet_theme') || 'dark';
     document.body.className = `theme-${savedTheme}`;
-    
-    function setTheme() {
-        const theme = document.getElementById("themeSelect").value;
-        document.body.className = `theme-${theme}`;
-        localStorage.setItem('jnet_theme', theme);
-        closeModal('themeModal');
-    }
-    
-    function openThemeModal() {
-        document.getElementById("themeSelect").value = localStorage.getItem('jnet_theme') || 'dark';
-        document.getElementById("themeModal").style.display = "flex";
-    }
-    
-    function closeModal(id) {
-        document.getElementById(id).style.display = "none";
-    }
-    
-    function showToast(text, icon = "📩") {
-        const toast = document.getElementById("toast");
-        document.getElementById("toastIcon").innerHTML = icon;
-        document.getElementById("toastContent").innerHTML = text;
-        toast.classList.remove("hide");
-        if (window.toastTimeout) clearTimeout(window.toastTimeout);
-        window.toastTimeout = setTimeout(() => toast.classList.add("hide"), 3000);
-    }
-    
+    function setTheme() { const theme = document.getElementById("themeSelect").value; document.body.className = `theme-${theme}`; localStorage.setItem('jnet_theme', theme); closeModal('themeModal'); }
+    function openThemeModal() { document.getElementById("themeSelect").value = localStorage.getItem('jnet_theme') || 'dark'; document.getElementById("themeModal").style.display = "flex"; }
+    function closeModal(id) { document.getElementById(id).style.display = "none"; }
+    function showToast(text, icon = "📩") { const t = document.getElementById("toast"); document.getElementById("toastIcon").innerHTML = icon; document.getElementById("toastContent").innerHTML = text; t.classList.remove("hide"); if (window.toastTimeout) clearTimeout(window.toastTimeout); window.toastTimeout = setTimeout(() => t.classList.add("hide"), 3000); }
     function hideToast() { document.getElementById("toast").classList.add("hide"); }
     document.getElementById("toastCloseBtn")?.addEventListener("click", hideToast);
     
-    // ========== ПЕРЕСЫЛКА ==========
     function openForwardModal(msgId, msgText, msgSender, msgSenderName) {
         forwardMessageData = { id: msgId, text: msgText, from: msgSender, fromName: msgSenderName };
         const select = document.getElementById("forwardTargetSelect");
         let options = '<option value="global">🌍 Общий чат</option>';
-        for (let user of onlineUsers) {
-            if (user.id !== myId) {
-                options += `<option value="${user.id}">💬 ${escapeHtml(user.name)} (личный чат)</option>`;
-            }
-        }
+        for (let user of onlineUsers) if (user.id !== myId) options += `<option value="${user.id}">💬 ${escapeHtml(user.name)}</option>`;
         select.innerHTML = options;
         document.getElementById("forwardModal").style.display = "flex";
     }
-    
     async function confirmForward() {
         const target = document.getElementById("forwardTargetSelect").value;
         if (!forwardMessageData) return;
-        
-        const message = {
-            from: myId,
-            fromName: myName,
-            to: target,
-            text: `📤 Переслано от ${forwardMessageData.fromName || forwardMessageData.from}: "${forwardMessageData.text}"`,
-            time: Date.now() / 1000,
-            isForwarded: true
-        };
-        
-        try {
-            await fetch(`${FIREBASE_URL}messages.json`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(message)
-            });
-            showToast("✅ Сообщение переслано", "📤");
-        } catch(e) { showToast("❌ Ошибка", "❌"); }
-        closeModal('forwardModal');
-        forwardMessageData = null;
+        const message = { from: myId, fromName: myName, to: target, text: `📤 Переслано от ${forwardMessageData.fromName || forwardMessageData.from}: "${forwardMessageData.text}"`, time: Date.now()/1000, isForwarded: true };
+        await fetch(`${FIREBASE_URL}messages.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
+        showToast("✅ Переслано", "📤");
+        closeModal('forwardModal'); forwardMessageData = null;
     }
     
-    // ========== ОНЛАЙН ==========
-    async function register() {
-        if (bannedUsers.includes(myId)) return;
-        try {
-            await fetch(`${FIREBASE_URL}peers/${myId}.json`, {
-                method: 'PUT',
-                body: JSON.stringify({ id: myId, name: myName, last_seen: Date.now()/1000 })
-            });
-        } catch(e) {}
-    }
-    
+    async function register() { if (bannedUsers.includes(myId)) return; try { await fetch(`${FIREBASE_URL}peers/${myId}.json`, { method: 'PUT', body: JSON.stringify({ id: myId, name: myName, last_seen: Date.now()/1000 }) }); } catch(e) {} }
     async function updateOnline() {
         try {
-            const resp = await fetch(`${FIREBASE_URL}peers.json`);
-            const peers = await resp.json() || {};
+            const resp = await fetch(`${FIREBASE_URL}peers.json`); const peers = await resp.json() || {};
             onlineUsers = [];
-            for (let id in peers) {
-                if (id !== myId && !bannedUsers.includes(id) && (Date.now()/1000 - peers[id].last_seen) < 60) {
-                    onlineUsers.push({ id, name: peers[id].name || id });
-                }
-            }
+            for (let id in peers) if (id !== myId && !bannedUsers.includes(id) && (Date.now()/1000 - peers[id].last_seen) < 60) onlineUsers.push({ id, name: peers[id].name || id });
             document.getElementById("onlineCount").innerHTML = `🖧 ${onlineUsers.length}`;
             let html = '';
             for (let u of onlineUsers) {
                 const active = (currentChat === u.id) ? 'active' : '';
                 const unread = unreadCounts[u.id] || 0;
-                html += `<div class="online-user ${active}" data-id="${u.id}" onclick="switchToDM('${u.id}', '${u.name.replace(/'/g, "\\'")}')">
-                    <div class="user-status"></div>
-                    <div class="user-name">${escapeHtml(u.name)}</div>
-                    ${unread > 0 ? `<span class="dm-unread">${unread > 99 ? '99+' : unread}</span>` : ''}
-                </div>`;
+                html += `<div class="online-user ${active}" data-id="${u.id}" onclick="switchToDM('${u.id}', '${u.name.replace(/'/g, "\\'")}')"><div class="user-status"></div><div class="user-name">${escapeHtml(u.name)}</div>${unread ? `<span class="dm-unread">${unread}</span>` : ''}</div>`;
             }
             document.getElementById("onlineList").innerHTML = html || '<div style="padding:20px;">🤷‍♂️ Никого нет</div>';
         } catch(e) {}
         setTimeout(updateOnline, 10000);
     }
     
-    function switchToGlobal() {
-        markAsRead('global');
-        currentChat = 'global';
-        currentChatName = 'Общий чат';
-        document.getElementById("chatTitle").innerHTML = '🌍 Общий чат';
-        document.getElementById("backBtn").style.display = 'none';
-        document.getElementById("messages").innerHTML = '<div class="empty-chat">💬 Загрузка...</div>';
-        processedMessages.clear();
-        loadMessages();
-        closeSidebar();
-    }
+    function switchToGlobal() { markAsRead('global'); currentChat = 'global'; currentChatName = 'Общий чат'; document.getElementById("chatTitle").innerHTML = '🌍 Общий чат'; document.getElementById("backBtn").style.display = 'none'; document.getElementById("messages").innerHTML = '<div class="empty-chat">💬 Загрузка...</div>'; processedMessages.clear(); loadMessages(); closeSidebar(); }
+    function switchToDM(userId, userName) { if (bannedUsers.includes(userId)) { alert("⚠️ Пользователь забанен"); return; } markAsRead(userId); currentChat = userId; currentChatName = userName; document.getElementById("chatTitle").innerHTML = `💬 ${escapeHtml(userName)}`; document.getElementById("backBtn").style.display = 'block'; document.getElementById("messages").innerHTML = '<div class="empty-chat">💬 Загрузка...</div>'; processedMessages.clear(); loadMessages(); closeSidebar(); }
     
-    function switchToDM(userId, userName) {
-        if (bannedUsers.includes(userId)) { alert("⚠️ Пользователь забанен"); return; }
-        markAsRead(userId);
-        currentChat = userId;
-        currentChatName = userName;
-        document.getElementById("chatTitle").innerHTML = `💬 ${escapeHtml(userName)}`;
-        document.getElementById("backBtn").style.display = 'block';
-        document.getElementById("messages").innerHTML = '<div class="empty-chat">💬 Загрузка...</div>';
-        processedMessages.clear();
-        loadMessages();
-        closeSidebar();
-    }
-    
-    async function sendMessage() {
-        const input = document.getElementById("messageInput");
-        const text = input.value.trim();
-        if (!text) return;
-        if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
-        
-        let replyData = null;
-        if (replyTo) {
-            replyData = replyTo;
-            cancelReply();
-        }
-        
-        addMessageToScreen(myName, text, true, null);
-        input.value = "";
-        
-        const message = {
-            from: myId,
-            fromName: myName,
-            to: currentChat,
-            text: text,
-            time: Date.now() / 1000,
-            reply: replyData
-        };
-        
-        try {
-            await fetch(`${FIREBASE_URL}messages.json`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(message)
-            });
-        } catch(e) {}
-    }
+    async function sendMessage() { const input = document.getElementById("messageInput"); const text = input.value.trim(); if (!text) return; if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; } let replyData = null; if (replyTo) { replyData = replyTo; cancelReply(); } addMessageToScreen(myName, text, true, null); input.value = ""; const message = { from: myId, fromName: myName, to: currentChat, text: text, time: Date.now()/1000, reply: replyData }; await fetch(`${FIREBASE_URL}messages.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) }); }
     
     async function loadMessages() {
         try {
-            const resp = await fetch(`${FIREBASE_URL}messages.json`);
-            const msgs = await resp.json() || {};
+            const resp = await fetch(`${FIREBASE_URL}messages.json`); const msgs = await resp.json() || {};
             let relevant = [];
             for (let id in msgs) {
                 if (processedMessages.has(id)) continue;
-                const msg = msgs[id];
-                if (bannedUsers.includes(msg.from)) continue;
+                const msg = msgs[id]; if (bannedUsers.includes(msg.from)) continue;
                 let isRelevant = false;
                 if (currentChat === 'global') isRelevant = (msg.to === 'global');
                 else isRelevant = (msg.from === myId && msg.to === currentChat) || (msg.from === currentChat && msg.to === myId);
-                if (isRelevant && (msg.text || msg.audioData || msg.imageData)) {
+                if (isRelevant && (msg.text || msg.audioData || msg.imageData || msg.videoData)) {
                     relevant.push({ id, ...msg });
                     processedMessages.add(id);
                 }
             }
-            relevant.sort((a, b) => a.time - b.time);
+            relevant.sort((a,b) => a.time - b.time);
             for (let msg of relevant) {
                 const isOwn = msg.from === myId;
                 const senderName = isOwn ? myName : (msg.fromName || msg.from);
-                if (msg.type === 'audio' && msg.audioData) {
-                    addAudioMessageToScreen(senderName, msg.audioData, isOwn, msg, msg.expiresAt);
-                } else if (msg.type === 'image' && msg.imageData) {
-                    addImageMessageToScreen(senderName, msg.imageData, isOwn, msg, msg.expiresAt);
-                } else {
-                    addMessageToScreen(senderName, msg.text, isOwn, msg);
-                }
+                if (msg.type === 'audio' && msg.audioData) addAudioMessageToScreen(senderName, msg.audioData, isOwn, msg, msg.expiresAt);
+                else if (msg.type === 'image' && msg.imageData) addImageMessageToScreen(senderName, msg.imageData, isOwn, msg, msg.expiresAt);
+                else if (msg.type === 'video' && msg.videoData) addVideoMessageToScreen(senderName, msg.videoData, isOwn, msg, msg.expiresAt);
+                else addMessageToScreen(senderName, msg.text, isOwn, msg);
             }
         } catch(e) {}
         setTimeout(loadMessages, 2000);
@@ -992,24 +992,14 @@
     function addMessageToScreen(senderName, text, isOwn, fullMsg) {
         const container = document.getElementById("messages");
         if (container.children.length === 1 && (container.children[0].innerText.includes('Загрузка') || container.children[0].classList?.contains('empty-chat'))) container.innerHTML = "";
-        
         const msgDiv = document.createElement("div");
         msgDiv.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
         const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-        
-        let replyHtml = "";
-        if (fullMsg && fullMsg.reply) {
-            const rs = fullMsg.reply.senderName || fullMsg.reply.sender;
-            replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}: "${escapeHtml(fullMsg.reply.text.substring(0, 40))}"</div>`;
-        }
-        
-        let forwardBadge = "";
+        let replyHtml = "", forwardBadge = "";
+        if (fullMsg && fullMsg.reply) { const rs = fullMsg.reply.senderName || fullMsg.reply.sender; replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}</div>`; }
         if (fullMsg && fullMsg.isForwarded) forwardBadge = `<div class="reply-badge">📤 Переслано</div>`;
-        
         msgDiv.innerHTML = `
-            <div class="message-sender">${escapeHtml(senderName)}</div>
-            ${forwardBadge}
-            ${replyHtml}
+            <div class="message-sender">${escapeHtml(senderName)}</div>${forwardBadge}${replyHtml}
             <div class="message-text">${escapeHtml(text)}</div>
             <div class="message-time">${time}</div>
             <div class="message-actions">
@@ -1017,97 +1007,52 @@
                 <button class="msg-action" onclick="event.stopPropagation(); setReply({id: '${fullMsg?.id || ''}', text: '${escapeHtml(text).replace(/'/g, "\\'")}', from: '${fullMsg?.from || (isOwn ? myId : 'unknown')}', fromName: '${escapeHtml(senderName).replace(/'/g, "\\'")}'})">↩️</button>
             </div>
         `;
-        
         const msgData = { id: fullMsg?.id, text: text, from: fullMsg?.from || (isOwn ? myId : 'unknown'), fromName: senderName };
-        msgDiv.onclick = (function(data) { return function(e) { if (!e.target.closest('.msg-action')) setReply(data); }; })(msgData);
-        
+        msgDiv.onclick = (function(d) { return function(e) { if (!e.target.closest('.msg-action')) setReply(d); }; })(msgData);
         container.appendChild(msgDiv);
         container.scrollTop = container.scrollHeight;
     }
     
-    function setReply(msg) {
-        replyTo = { id: msg.id, text: msg.text, sender: msg.from, senderName: msg.fromName };
-        document.getElementById("replyText").innerHTML = `${replyTo.senderName}: "${replyTo.text.substring(0, 40)}"`;
-        document.getElementById("replyPreview").style.display = "flex";
-    }
-    
-    function cancelReply() {
-        replyTo = null;
-        document.getElementById("replyPreview").style.display = "none";
-    }
-    
-    function updateUnreadBadges() {
-        const badge = document.getElementById("totalUnreadBadge");
-        if (totalUnread > 0) { badge.style.display = "flex"; badge.innerText = totalUnread > 99 ? "99+" : totalUnread; }
-        else { badge.style.display = "none"; }
-    }
-    
-    function markAsRead(userId) {
-        if (userId && unreadCounts[userId]) {
-            totalUnread -= unreadCounts[userId];
-            delete unreadCounts[userId];
-            updateUnreadBadges();
-        }
-    }
-    
+    function setReply(msg) { replyTo = { id: msg.id, text: msg.text, sender: msg.from, senderName: msg.fromName }; document.getElementById("replyText").innerHTML = `${replyTo.senderName}: "${replyTo.text.substring(0,40)}"`; document.getElementById("replyPreview").style.display = "flex"; }
+    function cancelReply() { replyTo = null; document.getElementById("replyPreview").style.display = "none"; }
+    function updateUnreadBadges() { const badge = document.getElementById("totalUnreadBadge"); if (totalUnread > 0) { badge.style.display = "flex"; badge.innerText = totalUnread > 99 ? "99+" : totalUnread; } else { badge.style.display = "none"; } }
+    function markAsRead(userId) { if (userId && unreadCounts[userId]) { totalUnread -= unreadCounts[userId]; delete unreadCounts[userId]; updateUnreadBadges(); } }
     function isBanned(id) { return bannedUsers.includes(id); }
+    function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); document.getElementById("overlay").classList.toggle("show"); }
+    function closeSidebar() { document.getElementById("sidebar").classList.remove("open"); document.getElementById("overlay").classList.remove("show"); }
+    function openNameModal() { document.getElementById("newName").value = myName; document.getElementById("nameModal").style.display = "flex"; }
+    async function changeName() { const newName = document.getElementById("newName").value.trim(); if (newName) { myName = newName; localStorage.setItem('jnet_name', myName); document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`; await register(); closeModal('nameModal'); showToast("✅ Имя изменено", "✏️"); } }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]); }
     
-    function toggleSidebar() {
-        document.getElementById("sidebar").classList.toggle("open");
-        document.getElementById("overlay").classList.toggle("show");
-    }
-    
-    function closeSidebar() {
-        document.getElementById("sidebar").classList.remove("open");
-        document.getElementById("overlay").classList.remove("show");
-    }
-    
-    function openNameModal() {
-        document.getElementById("newName").value = myName;
-        document.getElementById("nameModal").style.display = "flex";
-    }
-    
-    async function changeName() {
-        const newName = document.getElementById("newName").value.trim();
-        if (newName) {
-            myName = newName;
-            localStorage.setItem('jnet_name', myName);
-            document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`;
-            await register();
-            closeModal('nameModal');
-            showToast("✅ Имя изменено", "✏️");
-        }
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
-    }
-    
-    // ========== ЗАПУСК ==========
     document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`;
     
-    const recordBtn = document.getElementById('recordBtn');
-    recordBtn.addEventListener('mousedown', startRecording);
-    recordBtn.addEventListener('mouseup', stopRecording);
-    recordBtn.addEventListener('mouseleave', stopRecording);
-    recordBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); });
-    recordBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
+    // Кнопки
+    document.getElementById('recordBtn').addEventListener('mousedown', startAudioRecording);
+    document.getElementById('recordBtn').addEventListener('mouseup', stopAudioRecording);
+    document.getElementById('recordBtn').addEventListener('mouseleave', stopAudioRecording);
+    document.getElementById('recordBtn').addEventListener('touchstart', (e) => { e.preventDefault(); startAudioRecording(); });
+    document.getElementById('recordBtn').addEventListener('touchend', (e) => { e.preventDefault(); stopAudioRecording(); });
     
-    document.getElementById('imageBtn').addEventListener('click', () => {
-        document.getElementById('imageInput').click();
-    });
-    document.getElementById('imageInput').addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-            sendImage(e.target.files[0]);
-            e.target.value = '';
+    document.getElementById('imageBtn').addEventListener('click', () => document.getElementById('imageInput').click());
+    document.getElementById('videoBtn').addEventListener('click', () => {
+        // Показываем выбор: камера или файл
+        const choice = confirm("🎥 Записать с камеры?\n\nOK - запись с камеры\nОтмена - выбрать файл");
+        if (choice) {
+            openCameraModal();
+        } else {
+            document.getElementById('videoFileInput').click();
         }
     });
     
-    register();
-    updateOnline();
-    loadMessages();
-    setInterval(register, 30000);
+    document.getElementById('imageInput').addEventListener('change', (e) => { if (e.target.files?.[0]) sendImage(e.target.files[0]); e.target.value = ''; });
+    document.getElementById('videoFileInput').addEventListener('change', (e) => { if (e.target.files?.[0]) sendVideoFile(e.target.files[0]); e.target.value = ''; });
+    
+    // Кнопки камеры
+    document.getElementById('startCameraBtn').addEventListener('click', startVideoRecording);
+    document.getElementById('stopCameraBtn').addEventListener('click', stopVideoRecording);
+    document.getElementById('closeCameraBtn').addEventListener('click', closeCameraModal);
+    
+    register(); updateOnline(); loadMessages(); setInterval(register, 30000);
 </script>
 </body>
 </html>
