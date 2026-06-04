@@ -15,17 +15,84 @@
             overflow: hidden;
             position: fixed;
             width: 100%;
+            transition: background 0.3s ease, color 0.3s ease;
         }
+        
+        /* ========== ТЕМА: ТЁМНАЯ (по умолчанию) ========== */
+        body.theme-dark {
+            background: #0a0f1e;
+            color: #e0e0e0;
+        }
+        body.theme-dark .header { background: linear-gradient(135deg, #0f6e6e, #0a5a5a); }
+        body.theme-dark .message-own { background: #0f6e6e; color: white; }
+        body.theme-dark .message-other { background: #2a2f40; color: #e0e0e0; }
+        body.theme-dark .input-area input { background: #2a2f40; color: white; }
+        body.theme-dark .sidebar { background: #1a1f2e; }
+        body.theme-dark .status-bar { background: #0f1420; border-bottom-color: #2a2f40; color: #aaa; }
+        body.theme-dark .modal-content { background: #1a1f2e; }
+        body.theme-dark .toast { background: #1a1f2e; }
+        body.theme-dark .online-user.active { background: #0f6e6e; }
+        body.theme-dark .sidebar-item:active { background: #2a2f40; }
+        body.theme-dark .online-user:active { background: #2a2f40; }
+        
+        /* ========== ТЕМА: СВЕТЛАЯ ========== */
+        body.theme-light {
+            background: #f0f2f5;
+            color: #1a1a2e;
+        }
+        body.theme-light .header { background: linear-gradient(135deg, #0f6e6e, #0a5a5a); color: white; }
+        body.theme-light .message-own { background: #0f6e6e; color: white; }
+        body.theme-light .message-other { background: #e4e6eb; color: #1a1a2e; }
+        body.theme-light .input-area input { background: white; color: #1a1a2e; border: 1px solid #ccc; }
+        body.theme-light .sidebar { background: white; }
+        body.theme-light .status-bar { background: #e4e6eb; border-bottom-color: #ccc; color: #666; }
+        body.theme-light .modal-content { background: white; }
+        body.theme-light .toast { background: white; }
+        body.theme-light .online-user.active { background: #0f6e6e; color: white; }
+        body.theme-light .sidebar-item:active { background: #e4e6eb; }
+        body.theme-light .online-user:active { background: #e4e6eb; }
+        
+        /* ========== ТЕМА: НЕОН ========== */
+        body.theme-neon {
+            background: #000;
+            color: #00ffcc;
+        }
+        body.theme-neon .header { background: linear-gradient(135deg, #00aa88, #008866); }
+        body.theme-neon .message-own { background: #00aa88; color: #000; }
+        body.theme-neon .message-other { background: #0a1a15; border: 1px solid #00ffcc; color: #00ffcc; }
+        body.theme-neon .input-area input { background: #0a0a15; border: 1px solid #00ffcc; color: #00ffcc; }
+        body.theme-neon .sidebar { background: #0a0a15; border-right: 1px solid #00ffcc; }
+        body.theme-neon .status-bar { background: #0a0a15; border-bottom-color: #00ffcc; color: #00ffcc; }
+        body.theme-neon .modal-content { background: #0a0a15; border: 1px solid #00ffcc; }
+        body.theme-neon .toast { background: #0a0a15; border-left-color: #00ffcc; }
+        body.theme-neon .online-user.active { background: #00aa88; color: #000; }
+        body.theme-neon .sidebar-item:active { background: #00aa8833; }
+        body.theme-neon .online-user:active { background: #00aa8833; }
+        
+        /* ========== ТЕМА: ВОЕННАЯ ========== */
+        body.theme-military {
+            background: #2b3b1a;
+            color: #d4c9a8;
+        }
+        body.theme-military .header { background: linear-gradient(135deg, #4a5a2a, #3a4a1a); }
+        body.theme-military .message-own { background: #4a5a2a; color: #d4c9a8; }
+        body.theme-military .message-other { background: #3a3520; color: #d4c9a8; }
+        body.theme-military .input-area input { background: #3a3520; color: #d4c9a8; }
+        body.theme-military .sidebar { background: #1a1a0a; border-right: 1px solid #6b5a3e; }
+        body.theme-military .status-bar { background: #1a1a0a; border-bottom-color: #6b5a3e; color: #d4c9a8; }
+        body.theme-military .modal-content { background: #1a1a0a; }
+        body.theme-military .toast { background: #1a1a0a; border-left-color: #6b5a3e; }
+        body.theme-military .online-user.active { background: #4a5a2a; color: #d4c9a8; }
+        body.theme-military .sidebar-item:active { background: #3a3520; }
+        body.theme-military .online-user:active { background: #3a3520; }
         
         .app {
             display: flex;
             flex-direction: column;
             height: 100%;
-            background: #0a0f1e;
         }
         
         .header {
-            background: linear-gradient(135deg, #0f6e6e, #0a5a5a);
             padding: 12px 16px;
             display: flex;
             align-items: center;
@@ -91,13 +158,11 @@
         }
         
         .status-bar {
-            background: #0f1420;
             padding: 6px 16px;
             display: flex;
             justify-content: space-between;
             font-size: 0.7rem;
-            color: #aaa;
-            border-bottom: 1px solid #2a2f40;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
         .messages {
@@ -120,15 +185,11 @@
         
         .message-own {
             align-self: flex-end;
-            background: #0f6e6e;
-            color: white;
             border-bottom-right-radius: 4px;
         }
         
         .message-other {
             align-self: flex-start;
-            background: #2a2f40;
-            color: #e0e0e0;
             border-bottom-left-radius: 4px;
             cursor: pointer;
         }
@@ -177,8 +238,6 @@
             padding: 12px 16px;
             border: none;
             border-radius: 25px;
-            background: #2a2f40;
-            color: white;
             font-size: 1rem;
             outline: none;
         }
@@ -222,7 +281,6 @@
             bottom: 80px;
             left: 16px;
             right: 16px;
-            background: #1a1f2e;
             border-left: 4px solid #0f6e6e;
             padding: 14px 16px;
             border-radius: 12px;
@@ -265,7 +323,6 @@
             width: 85%;
             max-width: 320px;
             height: 100%;
-            background: #1a1f2e;
             z-index: 1000;
             transition: left 0.3s ease;
             display: flex;
@@ -286,15 +343,13 @@
         
         .sidebar-item {
             padding: 16px 20px;
-            border-bottom: 1px solid #2a2f40;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 12px;
             position: relative;
         }
-        
-        .sidebar-item:active { background: #2a2f40; }
         
         .online-users {
             flex: 1;
@@ -310,9 +365,6 @@
             cursor: pointer;
             position: relative;
         }
-        
-        .online-user:active { background: #2a2f40; }
-        .online-user.active { background: #0f6e6e; }
         
         .user-status {
             width: 10px;
@@ -364,14 +416,14 @@
         }
         
         .modal-content {
-            background: #1a1f2e;
             padding: 24px;
             border-radius: 20px;
             width: 90%;
             max-width: 320px;
         }
         
-        .modal-content input {
+        .modal-content h3 { margin-bottom: 15px; }
+        .modal-content input, .modal-content select {
             width: 100%;
             padding: 12px;
             margin: 15px 0;
@@ -415,7 +467,10 @@
     <div class="sidebar-item" onclick="switchToGlobal(); closeSidebar();">
         <span>🌍</span> Общий чат
     </div>
-    <div style="padding: 12px 20px; font-size: 0.7rem; color: #aaa; border-bottom: 1px solid #2a2f40;">
+    <div class="sidebar-item" onclick="openThemeModal(); closeSidebar();">
+        <span>🎨</span> Тема оформления
+    </div>
+    <div style="padding: 12px 20px; font-size: 0.7rem; color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.1);">
         👥 Личные сообщения
     </div>
     <div class="online-users" id="onlineList">
@@ -463,12 +518,27 @@
     <button class="toast-close" onclick="hideToast()">✖</button>
 </div>
 
+<!-- Модалка темы -->
+<div id="themeModal" class="modal">
+    <div class="modal-content">
+        <h3>🎨 Выберите тему</h3>
+        <select id="themeSelect">
+            <option value="dark">🌙 Тёмная</option>
+            <option value="light">☀️ Светлая</option>
+            <option value="neon">💚 Неон</option>
+            <option value="military">🪖 Военная</option>
+        </select>
+        <button onclick="setTheme()">Применить</button>
+        <button onclick="closeModal('themeModal')">Отмена</button>
+    </div>
+</div>
+
 <div id="nameModal" class="modal">
     <div class="modal-content">
         <h3>Сменить имя</h3>
         <input type="text" id="newName" placeholder="Новое имя">
         <button onclick="changeName()">Сохранить</button>
-        <button onclick="closeModal()">Отмена</button>
+        <button onclick="closeModal('nameModal')">Отмена</button>
     </div>
 </div>
 
@@ -498,6 +568,26 @@
     let unreadCounts = {};
     let totalUnread = 0;
     
+    // ========== ТЕМЫ ==========
+    const savedTheme = localStorage.getItem('jnet_theme') || 'dark';
+    document.body.className = `theme-${savedTheme}`;
+    
+    function setTheme() {
+        const theme = document.getElementById("themeSelect").value;
+        document.body.className = `theme-${theme}`;
+        localStorage.setItem('jnet_theme', theme);
+        closeModal('themeModal');
+    }
+    
+    function openThemeModal() {
+        document.getElementById("themeSelect").value = localStorage.getItem('jnet_theme') || 'dark';
+        document.getElementById("themeModal").style.display = "flex";
+    }
+    
+    function closeModal(id) {
+        document.getElementById(id).style.display = "none";
+    }
+    
     function playSound() {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -520,7 +610,6 @@
         const toast = document.getElementById("toast");
         toast.classList.remove("hide");
         
-        // Автоскрытие через 3 секунды
         if (window.toastTimeout) clearTimeout(window.toastTimeout);
         window.toastTimeout = setTimeout(() => hideToast(), 3000);
     }
@@ -575,10 +664,6 @@
     function closeSidebar() {
         document.getElementById("sidebar").classList.remove("open");
         document.getElementById("overlay").classList.remove("show");
-    }
-    
-    function closeModal() {
-        document.getElementById("nameModal").style.display = "none";
     }
     
     function openNameModal() {
@@ -826,7 +911,7 @@
             localStorage.setItem('jnet_name', myName);
             document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`;
             await register();
-            closeModal();
+            closeModal('nameModal');
         }
     }
     
