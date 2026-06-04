@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JNet - Республика Жакид (звонки с гудками)</title>
+    <title>JNet - Республика Жакид</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -161,35 +161,90 @@
         .message:hover .message-actions { display: flex; }
         .msg-action { background: none; border: none; color: white; font-size: 1rem; cursor: pointer; padding: 4px 8px; border-radius: 20px; }
         
-        .input-wrapper { background: #0f1420; border-top: 1px solid #2a2f40; padding-bottom: env(safe-area-inset-bottom, 0); }
+        /* НОВАЯ АДАПТИВНАЯ НИЖНЯЯ ПАНЕЛЬ */
+        .input-wrapper {
+            background: #0f1420;
+            border-top: 1px solid #2a2f40;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        
         .input-area {
-            padding: 10px 16px;
+            padding: 8px 12px;
             display: flex;
             gap: 8px;
+            align-items: center;
             background: #0f1420;
         }
+        
         .input-area input {
             flex: 1;
-            padding: 12px 16px;
+            padding: 12px 14px;
             border: none;
             border-radius: 25px;
             font-size: 1rem;
             outline: none;
+            min-width: 0;
         }
+        
         .input-area button {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border: none;
             border-radius: 50%;
             background: #0f6e6e;
             color: white;
             font-size: 1.2rem;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
         
-        .record-btn { background: #8b0000; }
+        /* Кнопка с плюсом для доп. функций */
+        .plus-menu-btn {
+            background: #2a2f40;
+        }
+        
+        /* Всплывающее меню дополнительных функций */
+        .extra-menu {
+            position: fixed;
+            bottom: 70px;
+            right: 16px;
+            background: #1a1f2e;
+            border-radius: 20px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 150;
+            transform: scale(0);
+            transition: transform 0.2s ease;
+            transform-origin: bottom right;
+        }
+        
+        .extra-menu.show {
+            transform: scale(1);
+        }
+        
+        .extra-menu button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .extra-menu .image-extra-btn { background: #0f6e6e; color: white; }
+        .extra-menu .video-extra-btn { background: #0f6e6e; color: white; }
+        .extra-menu .record-extra-btn { background: #8b0000; color: white; }
+        
         .record-btn.recording { background: #ff4444; animation: pulse 1s infinite; }
-        .image-btn, .video-btn { background: #2a2f40; }
         
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -197,32 +252,51 @@
             100% { transform: scale(1); }
         }
         
-        .record-timer { font-size: 0.7rem; text-align: center; padding: 5px; color: #ff8888; }
-        .reply-preview { background: #1a2a2a; padding: 10px 16px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
-        .cancel-reply { background: none; border: none; color: #ff8888; font-size: 1.2rem; cursor: pointer; padding: 5px; }
+        .record-timer {
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 5px;
+            color: #ff8888;
+        }
+        
+        .reply-preview {
+            background: #1a2a2a;
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cancel-reply {
+            background: none;
+            border: none;
+            color: #ff8888;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+        }
         
         .toast {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 80px;
+            left: 16px;
+            right: 16px;
             background: #1a1f2e;
             border-left: 4px solid #0f6e6e;
-            padding: 12px 20px;
+            padding: 12px 16px;
             border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 1000;
+            z-index: 200;
             transition: opacity 0.3s ease;
-            min-width: 200px;
-            max-width: 90%;
         }
         .toast.hide { opacity: 0; visibility: hidden; }
-        .toast-icon { font-size: 20px; }
-        .toast-content { font-size: 0.85rem; }
-        .toast-close { background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; margin-left: 8px; }
+        .toast-icon { font-size: 18px; }
+        .toast-content { flex: 1; font-size: 0.8rem; }
+        .toast-close { background: none; border: none; color: #aaa; font-size: 1.1rem; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; }
         
         /* Модалка звонка */
         .call-modal {
@@ -346,7 +420,8 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .message { animation: fadeIn 0.2s ease; }
         
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
+            .input-area button { width: 40px; height: 40px; font-size: 1rem; }
             .message-actions { top: auto; bottom: -30px; right: 0; }
         }
     </style>
@@ -389,12 +464,17 @@
         <div class="input-area">
             <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button id="sendBtn" onclick="sendMessage()">📨</button>
-            <button id="imageBtn" class="image-btn">🖼️</button>
-            <button id="videoBtn" class="video-btn">🎥</button>
-            <button id="recordBtn" class="record-btn">🎤</button>
+            <button id="plusMenuBtn" class="plus-menu-btn">➕</button>
         </div>
         <div id="recordTimer" class="record-timer" style="display:none;"></div>
     </div>
+</div>
+
+<!-- Всплывающее меню доп. функций -->
+<div id="extraMenu" class="extra-menu">
+    <button id="imageExtraBtn" class="image-extra-btn" title="Изображение">🖼️</button>
+    <button id="videoExtraBtn" class="video-extra-btn" title="Видео">🎥</button>
+    <button id="recordExtraBtn" class="record-extra-btn" title="Голосовое">🎤</button>
 </div>
 
 <input type="file" id="imageInput" accept="image/*" style="display:none">
@@ -454,8 +534,8 @@
         <div class="call-status">📞 Входящий звонок...</div>
     </div>
     <div class="call-buttons">
-        <button class="answer-btn" id="answerCallBtn">📞 Ответить</button>
-        <button class="decline-btn" id="declineCallBtn">✖ Отклонить</button>
+        <button class="answer-btn" id="answerCallBtn">📞</button>
+        <button class="decline-btn" id="declineCallBtn">✖</button>
     </div>
 </div>
 
@@ -466,7 +546,7 @@
         <div class="call-status" id="callStatus">⏳ Вызов...</div>
     </div>
     <div class="call-buttons">
-        <button class="end-btn" id="endCallBtn">🔴 Завершить</button>
+        <button class="end-btn" id="endCallBtn">🔴</button>
     </div>
 </div>
 
@@ -495,7 +575,22 @@
     let unreadCounts = {};
     let totalUnread = 0;
     
-    // ========== WEBRTC ЗВОНКИ С ГУДКАМИ ==========
+    // ========== ВСПЛЫВАЮЩЕЕ МЕНЮ ==========
+    const extraMenu = document.getElementById('extraMenu');
+    const plusMenuBtn = document.getElementById('plusMenuBtn');
+    
+    plusMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        extraMenu.classList.toggle('show');
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!extraMenu.contains(e.target) && e.target !== plusMenuBtn) {
+            extraMenu.classList.remove('show');
+        }
+    });
+    
+    // ========== WEBRTC ЗВОНКИ ==========
     let localStream = null;
     let currentCall = null;
     let isCallActive = false;
@@ -503,8 +598,8 @@
     let incomingOffer = null;
     let peerConnection = null;
     let isCalling = false;
-    let ringToneInterval = null;   // Для гудков при исходящем звонке
-    let incomingRingInterval = null; // Для сигнала входящего звонка
+    let ringToneInterval = null;
+    let incomingRingInterval = null;
     
     const configuration = {
         iceServers: [
@@ -514,7 +609,6 @@
         ]
     };
     
-    // Создание гудка (короткий звук)
     function playBeep(frequency = 440, duration = 300) {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -530,7 +624,6 @@
         } catch(e) {}
     }
     
-    // Гудки для исходящего звонка (длинные гудки с паузой)
     function startOutgoingRingTone() {
         if (ringToneInterval) clearInterval(ringToneInterval);
         playBeep(440, 400);
@@ -542,13 +635,9 @@
     }
     
     function stopOutgoingRingTone() {
-        if (ringToneInterval) {
-            clearInterval(ringToneInterval);
-            ringToneInterval = null;
-        }
+        if (ringToneInterval) { clearInterval(ringToneInterval); ringToneInterval = null; }
     }
     
-    // Сигнал входящего звонка (короткие гудки)
     function startIncomingRingTone() {
         if (incomingRingInterval) clearInterval(incomingRingInterval);
         playBeep(660, 200);
@@ -562,34 +651,17 @@
     }
     
     function stopIncomingRingTone() {
-        if (incomingRingInterval) {
-            clearInterval(incomingRingInterval);
-            incomingRingInterval = null;
-        }
+        if (incomingRingInterval) { clearInterval(incomingRingInterval); incomingRingInterval = null; }
     }
     
-    function logCall(msg) {
-        console.log('[CALL]', msg);
-    }
-    
-    // Отправка сигнала через Firebase
     async function sendSignal(toUserId, signal, type) {
-        const signalData = {
-            from: myId,
-            to: toUserId,
-            signal: signal,
-            type: type,
-            time: Date.now()
-        };
-        logCall(`📡 Отправка ${type} для ${toUserId}`);
         await fetch(`${FIREBASE_URL}signals/${toUserId}.json`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(signalData)
+            body: JSON.stringify({ from: myId, to: toUserId, signal: signal, type: type, time: Date.now() })
         });
     }
     
-    // Получение сигналов
     async function listenForSignals() {
         try {
             const resp = await fetch(`${FIREBASE_URL}signals/${myId}.json`);
@@ -597,8 +669,6 @@
             for (let id in signals) {
                 const data = signals[id];
                 if (data.from !== myId) {
-                    logCall(`📨 Получен сигнал ${data.type} от ${data.from}`);
-                    
                     if (data.type === 'offer') {
                         if (!isCallActive && !isCalling) {
                             incomingCallFrom = data.from;
@@ -607,7 +677,6 @@
                             document.getElementById('callerName').innerHTML = callerName;
                             document.getElementById('incomingCallModal').style.display = 'flex';
                             startIncomingRingTone();
-                            logCall(`📞 Входящий звонок от ${callerName}`);
                         } else {
                             await sendSignal(data.from, { type: 'busy' }, 'busy');
                         }
@@ -616,7 +685,6 @@
                         stopOutgoingRingTone();
                         if (peerConnection) {
                             await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal));
-                            logCall(`✅ Answer установлен`);
                             document.getElementById('callStatus').innerHTML = '🔊 Соединение...';
                         }
                     }
@@ -635,34 +703,22 @@
                         showToast("📞 Звонок отклонён", "📞");
                         endCall();
                     }
-                    
                     await fetch(`${FIREBASE_URL}signals/${myId}/${id}.json`, { method: 'DELETE' });
                 }
             }
-        } catch(e) { console.log("Ошибка получения сигналов:", e); }
+        } catch(e) {}
         setTimeout(listenForSignals, 2000);
     }
     
     async function createPeerConnection(targetUserId) {
-        logCall(`🔌 Создание PeerConnection для ${targetUserId}`);
         peerConnection = new RTCPeerConnection(configuration);
-        
         if (localStream) {
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-                logCall(`🎤 Добавлен трек микрофона`);
-            });
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
         }
-        
         peerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-                logCall(`❄️ ICE кандидат отправлен`);
-                sendSignal(targetUserId, event.candidate, 'ice');
-            }
+            if (event.candidate) sendSignal(targetUserId, event.candidate, 'ice');
         };
-        
         peerConnection.ontrack = (event) => {
-            logCall(`🔊 Получен аудиопоток!`);
             stopOutgoingRingTone();
             stopIncomingRingTone();
             const audio = new Audio();
@@ -670,70 +726,44 @@
             audio.play().catch(e => console.log);
             document.getElementById('callStatus').innerHTML = '🔊 В разговоре';
         };
-        
         peerConnection.onconnectionstatechange = () => {
-            logCall(`📶 Состояние соединения: ${peerConnection.connectionState}`);
             if (peerConnection.connectionState === 'connected') {
                 stopOutgoingRingTone();
                 stopIncomingRingTone();
                 document.getElementById('callStatus').innerHTML = '🔊 В разговоре';
             }
             if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
-                logCall(`❌ Соединение потеряно`);
                 endCall();
                 showToast("📞 Звонок прерван", "📞");
             }
         };
-        
         return peerConnection;
     }
     
     async function startCall() {
-        if (currentChat === 'global') {
-            showToast("❌ Звонки доступны только в личных чатах", "📞");
-            return;
-        }
-        if (isCallActive || isCalling) {
-            showToast("❌ Уже есть активный звонок", "📞");
-            return;
-        }
-        
+        if (currentChat === 'global') { showToast("❌ Звонки только в личных чатах", "📞"); return; }
+        if (isCallActive || isCalling) { showToast("❌ Уже есть звонок", "📞"); return; }
         isCalling = true;
-        logCall(`📞 Начинаем звонок ${currentChatName} (${currentChat})`);
-        
         try {
-            logCall(`🎤 Запрос доступа к микрофону...`);
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            logCall(`✅ Микрофон получен`);
-            
             await createPeerConnection(currentChat);
-            
-            logCall(`📡 Создание offer...`);
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
             await sendSignal(currentChat, peerConnection.localDescription, 'offer');
-            
             document.getElementById('activeCallModal').style.display = 'flex';
             document.getElementById('activeCallName').innerHTML = currentChatName;
             document.getElementById('callStatus').innerHTML = '⏳ Вызов...';
             isCallActive = true;
             isCalling = false;
-            
-            // Запускаем гудки для исходящего звонка
             startOutgoingRingTone();
-            
-            logCall(`✅ Offer отправлен, ожидание ответа...`);
-            
             setTimeout(() => {
                 if (isCallActive && !peerConnection?.remoteDescription) {
-                    logCall(`⏰ Таймаут ожидания ответа`);
                     stopOutgoingRingTone();
                     showToast("📞 Абонент не ответил", "📞");
                     endCall();
                 }
             }, 30000);
         } catch(e) {
-            logCall(`❌ Ошибка: ${e.message}`);
             showToast("❌ Нет доступа к микрофону", "🎤");
             isCalling = false;
             endCall();
@@ -743,19 +773,13 @@
     async function answerCall() {
         if (!incomingCallFrom || !incomingOffer) return;
         stopIncomingRingTone();
-        logCall(`📞 Ответ на звонок от ${incomingCallFrom}`);
-        
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            logCall(`✅ Микрофон получен для ответа`);
-            
-            await createPeerConnection(incomingCallFrom, true);
-            
+            await createPeerConnection(incomingCallFrom);
             await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer));
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
             await sendSignal(incomingCallFrom, peerConnection.localDescription, 'answer');
-            
             document.getElementById('incomingCallModal').style.display = 'none';
             document.getElementById('activeCallModal').style.display = 'flex';
             document.getElementById('activeCallName').innerHTML = getCallerName(incomingCallFrom);
@@ -763,9 +787,7 @@
             isCallActive = true;
             incomingCallFrom = null;
             incomingOffer = null;
-            logCall(`✅ Answer отправлен, ожидание соединения`);
         } catch(e) {
-            logCall(`❌ Ошибка при ответе: ${e.message}`);
             showToast("❌ Не удалось ответить", "🎤");
         }
     }
@@ -773,7 +795,6 @@
     function declineCall() {
         if (incomingCallFrom) {
             stopIncomingRingTone();
-            logCall(`❌ Отклонение звонка от ${incomingCallFrom}`);
             sendSignal(incomingCallFrom, { type: 'decline' }, 'decline');
         }
         document.getElementById('incomingCallModal').style.display = 'none';
@@ -782,17 +803,10 @@
     }
     
     function endCall() {
-        logCall(`🔴 Завершение звонка`);
         stopOutgoingRingTone();
         stopIncomingRingTone();
-        if (peerConnection) {
-            peerConnection.close();
-            peerConnection = null;
-        }
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-            localStream = null;
-        }
+        if (peerConnection) { peerConnection.close(); peerConnection = null; }
+        if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
         isCallActive = false;
         isCalling = false;
         incomingCallFrom = null;
@@ -802,61 +816,32 @@
     }
     
     function getCallerName(peerId) {
-        for (let user of onlineUsers) {
-            if (user.id === peerId) return user.name;
-        }
+        for (let user of onlineUsers) if (user.id === peerId) return user.name;
         return peerId;
     }
     
-    // Кнопки звонков
     document.getElementById('answerCallBtn').onclick = answerCall;
     document.getElementById('declineCallBtn').onclick = declineCall;
     document.getElementById('endCallBtn').onclick = endCall;
     
     function updateCallButton() {
         const callBtn = document.getElementById('callBtn');
-        if (currentChat !== 'global') {
-            callBtn.style.display = 'block';
-            callBtn.onclick = startCall;
-        } else {
-            callBtn.style.display = 'none';
-        }
+        callBtn.style.display = (currentChat !== 'global') ? 'block' : 'none';
+        callBtn.onclick = startCall;
     }
     
-    // ========== АВТО-УДАЛЕНИЕ ==========
-    async function deleteExpiredMedia() {
-        try {
-            const resp = await fetch(`${FIREBASE_URL}messages.json`);
-            const msgs = await resp.json() || {};
-            const now = Date.now();
-            let deleted = 0;
-            for (let id in msgs) {
-                const msg = msgs[id];
-                if (msg.expiresAt && msg.expiresAt < now) {
-                    await fetch(`${FIREBASE_URL}messages/${id}.json`, { method: 'DELETE' });
-                    deleted++;
-                    processedMessages.delete(id);
-                    notifiedMessages.delete(id);
-                }
-            }
-            if (deleted > 0) { console.log(`🗑️ Удалено ${deleted} сообщений`); loadMessages(); }
-        } catch(e) {}
-    }
-    setInterval(deleteExpiredMedia, 30 * 60 * 1000);
-    setTimeout(deleteExpiredMedia, 5000);
-    
-    // ========== КАРТИНКИ, ВИДЕО, ГОЛОСОВЫЕ ==========
+    // ========== ОТПРАВКА КАРТИНОК, ВИДЕО, ГОЛОСА ==========
     async function sendImage(file) {
-        if (!file) return;
-        if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
+        if (!file || bannedUsers.includes(myId)) return;
         const compressed = await compressImage(file);
         if (!compressed) return;
-        let replyData = null;
-        if (replyTo) { replyData = replyTo; cancelReply(); }
+        let replyData = replyTo ? { ...replyTo } : null;
+        if (replyTo) cancelReply();
         const expiresAt = Date.now() + AUDIO_IMAGE_EXPIRY_MS;
         addImageMessageToScreen(myName, compressed, true, null, expiresAt);
         const message = { from: myId, fromName: myName, to: currentChat, type: 'image', imageData: compressed, time: Date.now()/1000, expiresAt: expiresAt, reply: replyData };
         await fetch(`${FIREBASE_URL}messages.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
+        extraMenu.classList.remove('show');
     }
     
     function compressImage(file) {
@@ -909,18 +894,18 @@
     }
     
     async function sendVideoFile(file) {
-        if (!file) return;
-        if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
+        if (!file || bannedUsers.includes(myId)) return;
         const duration = await getVideoDuration(file);
         if (duration > MAX_VIDEO_SECONDS) { showToast(`❌ Видео длиннее ${MAX_VIDEO_SECONDS} сек`, "🎥"); return; }
         const compressed = await compressVideoFile(file);
         if (!compressed) return;
-        let replyData = null;
-        if (replyTo) { replyData = replyTo; cancelReply(); }
+        let replyData = replyTo ? { ...replyTo } : null;
+        if (replyTo) cancelReply();
         const expiresAt = Date.now() + VIDEO_EXPIRY_MS;
         addVideoMessageToScreen(myName, compressed, true, null, expiresAt);
         const message = { from: myId, fromName: myName, to: currentChat, type: 'video', videoData: compressed, time: Date.now()/1000, expiresAt: expiresAt, reply: replyData };
         await fetch(`${FIREBASE_URL}messages.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
+        extraMenu.classList.remove('show');
     }
     
     function getVideoDuration(file) {
@@ -990,8 +975,9 @@
             mediaRecorderAudio.start(100);
             isAudioRecording = true;
             audioStartTime = Date.now();
-            document.getElementById('recordBtn').classList.add('recording');
-            document.getElementById('recordBtn').innerHTML = '⏹️';
+            const recordBtn = document.getElementById('recordExtraBtn');
+            recordBtn.classList.add('recording');
+            recordBtn.innerHTML = '⏹️';
             document.getElementById('recordTimer').style.display = 'block';
             audioTimerInterval = setInterval(() => {
                 const elapsed = Math.floor((Date.now() - audioStartTime) / 1000);
@@ -1006,16 +992,17 @@
         mediaRecorderAudio.stop();
         isAudioRecording = false;
         if (audioTimerInterval) clearInterval(audioTimerInterval);
-        document.getElementById('recordBtn').classList.remove('recording');
-        document.getElementById('recordBtn').innerHTML = '🎤';
+        const recordBtn = document.getElementById('recordExtraBtn');
+        recordBtn.classList.remove('recording');
+        recordBtn.innerHTML = '🎤';
         document.getElementById('recordTimer').style.display = 'none';
+        extraMenu.classList.remove('show');
     }
     
     async function sendAudioMessage(base64Audio) {
-        if (!base64Audio) return;
-        if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
-        let replyData = null;
-        if (replyTo) { replyData = replyTo; cancelReply(); }
+        if (!base64Audio || bannedUsers.includes(myId)) return;
+        let replyData = replyTo ? { ...replyTo } : null;
+        if (replyTo) cancelReply();
         const expiresAt = Date.now() + AUDIO_IMAGE_EXPIRY_MS;
         addAudioMessageToScreen(myName, base64Audio, true, null, expiresAt);
         const message = { from: myId, fromName: myName, to: currentChat, type: 'audio', audioData: base64Audio, time: Date.now()/1000, expiresAt: expiresAt, reply: replyData };
@@ -1164,14 +1151,14 @@
     
     document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`;
     
-    // Кнопки
-    document.getElementById('recordBtn').addEventListener('mousedown', startAudioRecording);
-    document.getElementById('recordBtn').addEventListener('mouseup', stopAudioRecording);
-    document.getElementById('recordBtn').addEventListener('mouseleave', stopAudioRecording);
-    document.getElementById('recordBtn').addEventListener('touchstart', (e) => { e.preventDefault(); startAudioRecording(); });
-    document.getElementById('recordBtn').addEventListener('touchend', (e) => { e.preventDefault(); stopAudioRecording(); });
-    document.getElementById('imageBtn').addEventListener('click', () => document.getElementById('imageInput').click());
-    document.getElementById('videoBtn').addEventListener('click', () => document.getElementById('videoFileInput').click());
+    // Кнопки доп. меню
+    document.getElementById('imageExtraBtn').addEventListener('click', () => document.getElementById('imageInput').click());
+    document.getElementById('videoExtraBtn').addEventListener('click', () => document.getElementById('videoFileInput').click());
+    document.getElementById('recordExtraBtn').addEventListener('mousedown', startAudioRecording);
+    document.getElementById('recordExtraBtn').addEventListener('mouseup', stopAudioRecording);
+    document.getElementById('recordExtraBtn').addEventListener('mouseleave', stopAudioRecording);
+    document.getElementById('recordExtraBtn').addEventListener('touchstart', (e) => { e.preventDefault(); startAudioRecording(); });
+    document.getElementById('recordExtraBtn').addEventListener('touchend', (e) => { e.preventDefault(); stopAudioRecording(); });
     document.getElementById('imageInput').addEventListener('change', (e) => { if (e.target.files?.[0]) sendImage(e.target.files[0]); e.target.value = ''; });
     document.getElementById('videoFileInput').addEventListener('change', (e) => { if (e.target.files?.[0]) sendVideoFile(e.target.files[0]); e.target.value = ''; });
     
