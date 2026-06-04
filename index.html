@@ -6,52 +6,135 @@
     <title>JNet - Республика Жакид</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
             background: #0a0f1e;
             height: 100vh;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+        
+        /* Основной контейнер */
+        .app {
             display: flex;
             flex-direction: column;
+            height: 100%;
+            background: #0a0f1e;
         }
+        
+        /* Шапка */
         .header {
             background: linear-gradient(135deg, #0f6e6e, #0a5a5a);
-            padding: 12px 15px;
+            padding: 12px 16px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 12px;
             color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 10;
         }
-        .header h1 { font-size: 1.1rem; }
-        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; display: none; }
-        .menu-btn { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .back-btn:active { background: rgba(255,255,255,0.2); }
+        
+        .header h1 {
+            font-size: 1.2rem;
+            flex: 1;
+        }
+        
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .menu-btn:active { background: rgba(255,255,255,0.2); }
+        
+        /* Статус бар */
         .status-bar {
             background: #0f1420;
-            padding: 6px 15px;
+            padding: 6px 16px;
             display: flex;
             justify-content: space-between;
             font-size: 0.7rem;
             color: #aaa;
+            border-bottom: 1px solid #2a2f40;
         }
+        
+        /* Область сообщений */
         .messages {
             flex: 1;
             overflow-y: auto;
-            padding: 15px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
             gap: 8px;
+            -webkit-overflow-scrolling: touch;
         }
+        
+        /* Сообщение */
         .message {
-            max-width: 80%;
-            padding: 10px 12px;
-            border-radius: 18px;
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 20px;
             word-wrap: break-word;
             position: relative;
         }
-        .message-own { align-self: flex-end; background: #0f6e6e; color: white; border-bottom-right-radius: 5px; }
-        .message-other { align-self: flex-start; background: #2a2f40; color: #e0e0e0; border-bottom-left-radius: 5px; cursor: pointer; }
-        .message-sender { font-size: 0.65rem; opacity: 0.8; margin-bottom: 4px; }
-        .message-text { font-size: 0.9rem; line-height: 1.4; }
-        .message-time { font-size: 0.55rem; opacity: 0.5; margin-top: 4px; }
+        
+        .message-own {
+            align-self: flex-end;
+            background: #0f6e6e;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message-other {
+            align-self: flex-start;
+            background: #2a2f40;
+            color: #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message-sender {
+            font-size: 0.65rem;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+        
+        .message-text {
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .message-time {
+            font-size: 0.55rem;
+            opacity: 0.5;
+            margin-top: 4px;
+        }
+        
         .reply-badge {
             font-size: 0.65rem;
             background: rgba(255,255,255,0.15);
@@ -60,60 +143,128 @@
             margin-bottom: 6px;
             display: inline-block;
         }
+        
+        /* Панель ввода */
         .input-area {
-            padding: 12px;
+            padding: 10px 16px;
             display: flex;
-            gap: 8px;
+            gap: 10px;
             background: #0f1420;
             border-top: 1px solid #2a2f40;
         }
+        
         .input-area input {
             flex: 1;
-            padding: 12px;
+            padding: 12px 16px;
             border: none;
             border-radius: 25px;
             background: #2a2f40;
             color: white;
-            font-size: 0.95rem;
+            font-size: 1rem;
             outline: none;
         }
+        
         .input-area button {
-            padding: 12px 20px;
+            width: 48px;
+            height: 48px;
             border: none;
-            border-radius: 25px;
+            border-radius: 50%;
             background: #0f6e6e;
             color: white;
-            font-weight: bold;
+            font-size: 1.2rem;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+        
+        .input-area button:active { opacity: 0.7; }
+        
+        /* Превью ответа */
         .reply-preview {
             background: #1a2a2a;
-            padding: 8px 12px;
+            padding: 10px 16px;
             font-size: 0.75rem;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #2a2f40;
         }
-        .cancel-reply { background: none; border: none; color: #ff8888; cursor: pointer; }
+        
+        .cancel-reply {
+            background: none;
+            border: none;
+            color: #ff8888;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        /* Боковое меню (выезжающее) */
         .sidebar {
             position: fixed;
             top: 0;
-            left: -280px;
-            width: 280px;
+            left: -100%;
+            width: 85%;
+            max-width: 320px;
             height: 100%;
             background: #1a1f2e;
-            z-index: 200;
-            transition: left 0.3s;
+            z-index: 1000;
+            transition: left 0.3s ease;
             display: flex;
             flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
         }
+        
         .sidebar.open { left: 0; }
-        .sidebar-header { padding: 20px; background: #0f6e6e; color: white; }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: #0f6e6e;
+            color: white;
+        }
+        
+        .sidebar-header h3 { margin-bottom: 5px; }
+        .sidebar-header p { font-size: 0.7rem; opacity: 0.8; }
+        
         .sidebar-item {
-            padding: 15px 20px;
+            padding: 16px 20px;
             border-bottom: 1px solid #2a2f40;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .sidebar-item:hover { background: #2a2f40; }
+        
+        .sidebar-item:active { background: #2a2f40; }
+        
+        .online-users {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        
+        .online-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            cursor: pointer;
+        }
+        
+        .online-user:active { background: #2a2f40; }
+        .online-user.active { background: #0f6e6e; }
+        
+        .user-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff00;
+        }
+        
+        .user-name { flex: 1; }
+        
+        /* Затемнение */
         .overlay {
             position: fixed;
             top: 0;
@@ -121,77 +272,130 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            z-index: 150;
+            z-index: 999;
             display: none;
         }
+        
         .overlay.show { display: block; }
-        .online-count { color: #00ffcc; }
-        .online-user {
-            display: flex;
+        
+        /* Модалка имени */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
             align-items: center;
-            gap: 10px;
-            padding: 10px;
+            z-index: 1100;
+        }
+        
+        .modal-content {
+            background: #1a1f2e;
+            padding: 24px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 320px;
+        }
+        
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: none;
+            border-radius: 12px;
+            background: #2a2f40;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .modal-content button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            background: #0f6e6e;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
             cursor: pointer;
-            border-radius: 10px;
         }
-        .online-user:hover { background: #2a2f40; }
-        .online-user.active { background: #0f6e6e; }
-        .user-status { width: 8px; height: 8px; border-radius: 50%; background: #00ff00; }
-        @media (min-width: 768px) {
-            .menu-btn { display: none; }
-            .sidebar { position: relative; left: 0; width: 260px; }
-            .overlay { display: none !important; }
-            .back-btn { display: inline-block; }
+        
+        .online-count { color: #00ffcc; }
+        
+        /* Пустое состояние */
+        .empty-chat {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6a6f80;
         }
-        @media (max-width: 767px) {
-            .sidebar:not(.open) { display: none; }
-            .back-btn { display: inline-block; }
+        
+        /* Анимация новых сообщений */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message {
+            animation: fadeIn 0.2s ease;
         }
     </style>
 </head>
 <body>
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <strong>🇯🇴 JNet</strong>
-        <div id="myInfo" style="font-size:0.7rem; margin-top:5px;"></div>
+        <h3>🇯🇴 JNet</h3>
+        <p id="myInfo">Загрузка...</p>
     </div>
-    <div class="sidebar-item" onclick="switchToGlobal(); closeSidebar();">🌍 Общий чат</div>
-    <div class="sidebar-item" style="opacity:0.7;">👥 Онлайн</div>
-    <div id="onlineList" style="padding:10px; max-height:300px; overflow-y:auto;"></div>
-    <div class="sidebar-item" onclick="openNameModal(); closeSidebar();">✏️ Сменить имя</div>
+    <div class="sidebar-item" onclick="switchToGlobal(); closeSidebar();">
+        <span>🌍</span> Общий чат
+    </div>
+    <div style="padding: 12px 20px; font-size: 0.7rem; color: #aaa; border-bottom: 1px solid #2a2f40;">
+        👥 Онлайн
+    </div>
+    <div class="online-users" id="onlineList">
+        <div style="padding: 20px; text-align: center;">Загрузка...</div>
+    </div>
+    <div class="sidebar-item" onclick="openNameModal(); closeSidebar();">
+        <span>✏️</span> Сменить имя
+    </div>
 </div>
 
-<div class="main-chat" style="flex:1; display:flex; flex-direction:column; height:100vh;">
+<div class="app">
     <div class="header">
-        <div style="display:flex; gap:10px; align-items:center;">
-            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-            <button class="back-btn" id="backBtn" onclick="switchToGlobal()" style="display:none;">←</button>
-            <h1 id="chatTitle">🌍 Общий чат</h1>
-        </div>
-        <div></div>
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <h1 id="chatTitle">🌍 Общий чат</h1>
+        <button class="back-btn" id="backBtn" onclick="switchToGlobal()" style="display: none;">←</button>
     </div>
     <div class="status-bar">
-        <span>🇯🇴 JNet</span>
-        <span class="online-count" id="onlineCount">🖧 Онлайн: 0</span>
+        <span>🇯🇴 Республика Жакид</span>
+        <span class="online-count" id="onlineCount">🖧 0</span>
     </div>
-    <div class="messages" id="messages"></div>
+    
+    <div class="messages" id="messages">
+        <div class="empty-chat">💬 Сообщений пока нет</div>
+    </div>
+    
     <div id="replyPreview" class="reply-preview" style="display: none;">
         <span>📎 Ответ на: <span id="replyText"></span></span>
         <button class="cancel-reply" onclick="cancelReply()">✖</button>
     </div>
+    
     <div class="input-area">
         <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
-        <button onclick="sendMessage()">📡</button>
+        <button onclick="sendMessage()">📨</button>
     </div>
 </div>
 
-<div id="nameModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:300;">
-    <div style="background:#1a1f2e; padding:20px; border-radius:20px; width:90%; max-width:320px;">
+<div id="nameModal" class="modal">
+    <div class="modal-content">
         <h3>Сменить имя</h3>
-        <input type="text" id="newName" placeholder="Новое имя" style="width:100%; padding:10px; margin:10px 0; border-radius:10px; background:#2a2f40; color:white; border:none;">
-        <button onclick="changeName()" style="background:#0f6e6e; color:white; padding:10px 20px; border:none; border-radius:10px;">Сохранить</button>
-        <button onclick="closeModal()" style="margin-left:10px; padding:10px 20px;">Отмена</button>
+        <input type="text" id="newName" placeholder="Новое имя">
+        <button onclick="changeName()">Сохранить</button>
+        <button onclick="closeModal()">Отмена</button>
     </div>
 </div>
 
@@ -209,27 +413,33 @@
     let currentChatName = 'Общий чат';
     let replyTo = null;
     let processedMessages = new Set();
-    let messagesCache = [];
+    let bannedUsers = JSON.parse(localStorage.getItem('jnet_banned') || '[]');
     
     document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`;
+    
+    function isBanned(id) { return bannedUsers.includes(id); }
     
     function toggleSidebar() {
         document.getElementById("sidebar").classList.toggle("open");
         document.getElementById("overlay").classList.toggle("show");
     }
+    
     function closeSidebar() {
         document.getElementById("sidebar").classList.remove("open");
         document.getElementById("overlay").classList.remove("show");
     }
+    
     function closeModal() {
         document.getElementById("nameModal").style.display = "none";
     }
+    
     function openNameModal() {
         document.getElementById("newName").value = myName;
         document.getElementById("nameModal").style.display = "flex";
     }
     
     async function register() {
+        if (isBanned(myId)) return;
         try {
             await fetch(`${FIREBASE_URL}peers/${myId}.json`, {
                 method: 'PUT',
@@ -245,11 +455,11 @@
             const peers = await resp.json() || {};
             let online = [];
             for (let id in peers) {
-                if (id !== myId && (Date.now()/1000 - peers[id].last_seen) < 60) {
+                if (id !== myId && !isBanned(id) && (Date.now()/1000 - peers[id].last_seen) < 60) {
                     online.push({ id, name: peers[id].name || id });
                 }
             }
-            document.getElementById("onlineCount").innerHTML = `🖧 Онлайн: ${online.length}`;
+            document.getElementById("onlineCount").innerHTML = `🖧 ${online.length}`;
             
             let html = '';
             for (let u of online) {
@@ -259,7 +469,7 @@
                     <div class="user-name">${escapeHtml(u.name)}</div>
                 </div>`;
             }
-            document.getElementById("onlineList").innerHTML = html || '<div>🤷‍♂️ Никого нет</div>';
+            document.getElementById("onlineList").innerHTML = html || '<div style="padding:20px;text-align:center;">🤷‍♂️ Никого нет</div>';
         } catch(e) {}
         setTimeout(updateOnline, 10000);
     }
@@ -269,18 +479,19 @@
         currentChatName = 'Общий чат';
         document.getElementById("chatTitle").innerHTML = '🌍 Общий чат';
         document.getElementById("backBtn").style.display = 'none';
-        document.getElementById("messages").innerHTML = '';
+        document.getElementById("messages").innerHTML = '<div class="empty-chat">💬 Сообщений пока нет</div>';
         processedMessages.clear();
         loadMessages();
         closeSidebar();
     }
     
     function switchToDM(userId, userName) {
+        if (isBanned(userId)) { alert("⚠️ Пользователь забанен"); return; }
         currentChat = userId;
         currentChatName = userName;
         document.getElementById("chatTitle").innerHTML = `💬 ${escapeHtml(userName)}`;
-        document.getElementById("backBtn").style.display = 'inline-block';
-        document.getElementById("messages").innerHTML = '';
+        document.getElementById("backBtn").style.display = 'block';
+        document.getElementById("messages").innerHTML = '<div class="empty-chat">💬 Сообщений пока нет</div>';
         processedMessages.clear();
         loadMessages();
         closeSidebar();
@@ -290,6 +501,7 @@
         const input = document.getElementById("messageInput");
         const text = input.value.trim();
         if (!text) return;
+        if (isBanned(myId)) { alert("⚠️ Вы забанены!"); return; }
         
         let replyData = null;
         if (replyTo) {
@@ -326,6 +538,7 @@
             for (let id in msgs) {
                 if (processedMessages.has(id)) continue;
                 const msg = msgs[id];
+                if (isBanned(msg.from)) continue;
                 let isRelevant = false;
                 if (currentChat === 'global') {
                     isRelevant = (msg.to === 'global');
@@ -336,13 +549,12 @@
                 if (isRelevant && msg.text) relevant.push({ id, ...msg });
             }
             relevant.sort((a, b) => a.time - b.time);
+            const container = document.getElementById("messages");
             for (let msg of relevant) {
                 const isOwn = msg.from === myId;
                 const senderName = isOwn ? myName : (msg.fromName || msg.from);
                 addMessageToScreen(senderName, msg.text, isOwn, msg);
                 processedMessages.add(msg.id);
-                messagesCache.push(msg);
-                if (messagesCache.length > 200) messagesCache.shift();
             }
         } catch(e) {}
         setTimeout(loadMessages, 2000);
@@ -350,6 +562,11 @@
     
     function addMessageToScreen(senderName, text, isOwn, fullMsg) {
         const container = document.getElementById("messages");
+        
+        if (container.children.length === 1 && container.children[0].classList?.contains('empty-chat')) {
+            container.innerHTML = "";
+        }
+        
         const msgDiv = document.createElement("div");
         msgDiv.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
         const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
@@ -357,7 +574,7 @@
         let replyHtml = "";
         if (fullMsg && fullMsg.reply) {
             const rs = fullMsg.reply.senderName || fullMsg.reply.sender;
-            replyHtml = `<div class="reply-badge">↩️ Ответ ${rs}: "${fullMsg.reply.text.substring(0, 50)}"</div>`;
+            replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}: "${escapeHtml(fullMsg.reply.text.substring(0, 40))}"</div>`;
         }
         
         msgDiv.innerHTML = `
@@ -367,7 +584,8 @@
             <div class="message-time">${time}</div>
         `;
         
-        if (!isOwn && fullMsg && fullMsg.from) {
+        if (!isOwn && fullMsg && fullMsg.from && fullMsg.from !== myId) {
+            msgDiv.style.cursor = "pointer";
             msgDiv.onclick = () => setReply(fullMsg);
         }
         
@@ -383,7 +601,7 @@
             sender: msg.from,
             senderName: msg.fromName || msg.from
         };
-        document.getElementById("replyText").innerHTML = `${replyTo.senderName}: "${replyTo.text.substring(0, 50)}"`;
+        document.getElementById("replyText").innerHTML = `${replyTo.senderName}: "${replyTo.text.substring(0, 40)}"`;
         document.getElementById("replyPreview").style.display = "flex";
     }
     
@@ -407,12 +625,6 @@
         if (!str) return '';
         return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
     }
-    
-    window.addEventListener('resize', () => {
-        if (window.innerWidth > 767 && currentChat !== 'global') {
-            document.getElementById("backBtn").style.display = 'inline-block';
-        }
-    });
     
     register();
     updateOnline();
