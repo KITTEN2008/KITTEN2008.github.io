@@ -11,6 +11,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
             background: #0a0f1e;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             position: fixed;
             width: 100%;
@@ -72,7 +73,6 @@
         
         .menu-btn:active { background: rgba(255,255,255,0.2); }
         
-        /* Счётчик непрочитанных на кнопке меню */
         .unread-badge {
             position: absolute;
             top: -2px;
@@ -159,12 +159,17 @@
             display: inline-block;
         }
         
+        .input-wrapper {
+            background: #0f1420;
+            border-top: 1px solid #2a2f40;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        
         .input-area {
             padding: 10px 16px;
             display: flex;
             gap: 10px;
             background: #0f1420;
-            border-top: 1px solid #2a2f40;
         }
         
         .input-area input {
@@ -201,7 +206,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-top: 1px solid #2a2f40;
         }
         
         .cancel-reply {
@@ -213,10 +217,9 @@
             padding: 5px;
         }
         
-        /* Всплывающее уведомление */
         .toast {
             position: fixed;
-            bottom: 80px;
+            bottom: 70px;
             left: 16px;
             right: 16px;
             background: #1a1f2e;
@@ -236,32 +239,11 @@
             transform: translateY(150%);
         }
         
-        .toast-icon {
-            font-size: 24px;
-        }
-        
-        .toast-content {
-            flex: 1;
-        }
-        
-        .toast-title {
-            font-weight: bold;
-            font-size: 0.85rem;
-        }
-        
-        .toast-text {
-            font-size: 0.75rem;
-            opacity: 0.8;
-            margin-top: 2px;
-        }
-        
-        .toast-close {
-            background: none;
-            border: none;
-            color: #aaa;
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
+        .toast-icon { font-size: 24px; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: bold; font-size: 0.85rem; }
+        .toast-text { font-size: 0.75rem; opacity: 0.8; margin-top: 2px; }
+        .toast-close { background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; }
         
         .sidebar {
             position: fixed;
@@ -328,7 +310,6 @@
         
         .user-name { flex: 1; }
         
-        /* Счётчик непрочитанных в списке пользователей */
         .dm-unread {
             background: #ff4444;
             color: white;
@@ -418,9 +399,8 @@
         <h3>🇯🇴 JNet</h3>
         <p id="myInfo">Загрузка...</p>
     </div>
-    <div class="sidebar-item" id="globalChatItem" onclick="switchToGlobal(); closeSidebar();">
+    <div class="sidebar-item" onclick="switchToGlobal(); closeSidebar();">
         <span>🌍</span> Общий чат
-        <span id="globalUnread" style="margin-left: auto;"></span>
     </div>
     <div style="padding: 12px 20px; font-size: 0.7rem; color: #aaa; border-bottom: 1px solid #2a2f40;">
         👥 Личные сообщения
@@ -435,7 +415,7 @@
 
 <div class="app">
     <div class="header">
-        <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()">☰<span id="totalUnreadBadge" class="unread-badge" style="display: none;">0</span></button>
+        <button class="menu-btn" onclick="toggleSidebar()">☰<span id="totalUnreadBadge" class="unread-badge" style="display: none;">0</span></button>
         <h1 id="chatTitle">🌍 Общий чат</h1>
         <button class="back-btn" id="backBtn" onclick="switchToGlobal()" style="display: none;">←</button>
     </div>
@@ -453,9 +433,11 @@
         <button class="cancel-reply" onclick="cancelReply()">✖</button>
     </div>
     
-    <div class="input-area">
-        <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
-        <button onclick="sendMessage()">📨</button>
+    <div class="input-wrapper">
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()">📨</button>
+        </div>
     </div>
 </div>
 
@@ -493,13 +475,8 @@
     let processedMessages = new Set();
     let bannedUsers = JSON.parse(localStorage.getItem('jnet_banned') || '[]');
     
-    // Счётчики непрочитанных
-    let unreadCounts = {}; // { userId: count }
+    let unreadCounts = {};
     let totalUnread = 0;
-    let lastActiveChat = 'global';
-    
-    // Для звука
-    let audio = new Audio("data:audio/wav;base64,U3RlYWx0aCBzb3VuZCBub3QgYXZhaWxhYmxl"); // тихий звук-заглушка, будет через Web Audio
     
     function playSound() {
         try {
@@ -513,7 +490,7 @@
             osc.start();
             gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
             osc.stop(ctx.currentTime + 0.5);
-        } catch(e) { console.log("Sound error", e); }
+        } catch(e) {}
     }
     
     function showToast(title, text, icon = "📩") {
@@ -531,7 +508,6 @@
     }
     
     function updateUnreadBadges() {
-        // Общая непрочитанная точка на кнопке меню
         const badge = document.getElementById("totalUnreadBadge");
         if (totalUnread > 0) {
             badge.style.display = "flex";
@@ -544,14 +520,14 @@
         const users = document.querySelectorAll('.online-user');
         users.forEach(user => {
             const userId = user.getAttribute('data-id');
-            if (userId && unreadCounts[userId] && currentChat !== userId) {
-                let existingBadge = user.querySelector('.dm-unread');
-                if (!existingBadge) {
-                    const badgeSpan = document.createElement('span');
+            if (userId && unreadCounts[userId] && unreadCounts[userId] > 0 && currentChat !== userId) {
+                let badgeSpan = user.querySelector('.dm-unread');
+                if (!badgeSpan) {
+                    badgeSpan = document.createElement('span');
                     badgeSpan.className = 'dm-unread';
                     user.appendChild(badgeSpan);
                 }
-                user.querySelector('.dm-unread').innerText = unreadCounts[userId] > 99 ? "99+" : unreadCounts[userId];
+                badgeSpan.innerText = unreadCounts[userId] > 99 ? "99+" : unreadCounts[userId];
             } else if (user.querySelector('.dm-unread')) {
                 user.querySelector('.dm-unread').remove();
             }
@@ -559,7 +535,7 @@
     }
     
     function markAsRead(userId) {
-        if (userId && unreadCounts[userId]) {
+        if (userId && unreadCounts[userId] && unreadCounts[userId] > 0) {
             totalUnread -= unreadCounts[userId];
             delete unreadCounts[userId];
             updateUnreadBadges();
@@ -629,7 +605,6 @@
         markAsRead('global');
         currentChat = 'global';
         currentChatName = 'Общий чат';
-        lastActiveChat = 'global';
         document.getElementById("chatTitle").innerHTML = '🌍 Общий чат';
         document.getElementById("backBtn").style.display = 'none';
         document.getElementById("messages").innerHTML = '<div class="empty-chat">💬 Сообщений пока нет</div>';
@@ -643,7 +618,6 @@
         markAsRead(userId);
         currentChat = userId;
         currentChatName = userName;
-        lastActiveChat = userId;
         document.getElementById("chatTitle").innerHTML = `💬 ${escapeHtml(userName)}`;
         document.getElementById("backBtn").style.display = 'block';
         document.getElementById("messages").innerHTML = '<div class="empty-chat">💬 Сообщений пока нет</div>';
@@ -701,7 +675,10 @@
                     isRelevant = (msg.from === myId && msg.to === currentChat) ||
                                  (msg.from === currentChat && msg.to === myId);
                 }
-                if (isRelevant && msg.text) relevant.push({ id, ...msg });
+                if (isRelevant && msg.text) {
+                    relevant.push({ id, ...msg });
+                    processedMessages.add(id);
+                }
             }
             relevant.sort((a, b) => a.time - b.time);
             const container = document.getElementById("messages");
@@ -709,39 +686,39 @@
                 const isOwn = msg.from === myId;
                 const senderName = isOwn ? myName : (msg.fromName || msg.from);
                 addMessageToScreen(senderName, msg.text, isOwn, msg);
-                processedMessages.add(msg.id);
             }
         } catch(e) {}
         setTimeout(loadMessages, 2000);
     }
     
-    // Отдельный слушатель для уведомлений (проверяет все новые сообщения)
+    // Отдельный слушатель для уведомлений
+    let notifiedMessages = new Set();
+    
     async function checkNotifications() {
         try {
             const resp = await fetch(`${FIREBASE_URL}messages.json`);
             const msgs = await resp.json() || {};
-            const now = Date.now() / 1000;
             for (let id in msgs) {
+                if (notifiedMessages.has(id)) continue;
                 const msg = msgs[id];
-                if (processedMessages.has(id)) continue;
                 if (isBanned(msg.from)) continue;
                 if (msg.from === myId) continue;
+                
                 const isForMe = (msg.to === myId);
                 const isReplyToMe = (msg.reply && msg.reply.sender === myId);
-                const isGlobalAndActive = (msg.to === 'global' && currentChat !== 'global');
+                const isGlobalWhenInDM = (msg.to === 'global' && currentChat !== 'global');
                 
                 if (isForMe && currentChat !== msg.from) {
-                    // Личное сообщение
                     if (!unreadCounts[msg.from]) unreadCounts[msg.from] = 0;
                     unreadCounts[msg.from]++;
                     totalUnread++;
                     updateUnreadBadges();
                     
                     if (document.hidden || currentChat !== msg.from) {
-                        showToast(`💬 ${msg.fromName || msg.from}`, msg.text.substring(0, 50), "📩");
+                        showToast(msg.fromName || msg.from, msg.text.substring(0, 50), "📩");
                     }
-                } else if (isReplyToMe && currentChat !== 'global' && currentChat !== msg.from) {
-                    // Ответ на моё сообщение
+                    notifiedMessages.add(id);
+                } else if (isReplyToMe && currentChat !== msg.from) {
                     if (!unreadCounts[msg.from]) unreadCounts[msg.from] = 0;
                     unreadCounts[msg.from]++;
                     totalUnread++;
@@ -750,8 +727,8 @@
                     if (document.hidden || currentChat !== msg.from) {
                         showToast(`↩️ Ответ от ${msg.fromName || msg.from}`, msg.text.substring(0, 50), "💬");
                     }
-                } else if (isGlobalAndActive && msg.to === 'global' && msg.from !== myId) {
-                    // Сообщение в общем чате, но пользователь в DM
+                    notifiedMessages.add(id);
+                } else if (isGlobalWhenInDM && msg.to === 'global' && msg.from !== myId) {
                     if (!unreadCounts['global']) unreadCounts['global'] = 0;
                     unreadCounts['global']++;
                     totalUnread++;
@@ -760,6 +737,9 @@
                     if (document.hidden) {
                         showToast(`🌍 Общий чат`, `${msg.fromName || msg.from}: ${msg.text.substring(0, 50)}`, "🌍");
                     }
+                    notifiedMessages.add(id);
+                } else {
+                    notifiedMessages.add(id);
                 }
             }
         } catch(e) {}
@@ -832,13 +812,10 @@
         return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
     }
     
-    // Проверяем видимость страницы для уведомлений
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
-            // Страница открыта — сбрасываем уведомления
             if (currentChat === 'global') markAsRead('global');
             else markAsRead(currentChat);
-            updateUnreadBadges();
         }
     });
     
