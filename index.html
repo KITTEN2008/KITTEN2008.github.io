@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JNet - Республика Жакид (голосовые удаляются через 4ч)</title>
+    <title>JNet - Республика Жакид (голосовые, картинки, авто-удаление)</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -24,7 +24,7 @@
         body.theme-dark .message-other { background: #2a2f40; color: #e0e0e0; }
         body.theme-dark .input-area input { background: #2a2f40; color: white; }
         body.theme-dark .sidebar { background: #1a1f2e; }
-        body.theme-dark .status-bar { background: #0f1420; border-bottom-color: #2a2f40; }
+        body.theme-dark .status-bar { background: #0f1420; }
         body.theme-dark .modal-content { background: #1a1f2e; }
         body.theme-dark .toast { background: #1a1f2e; }
         
@@ -32,7 +32,7 @@
         body.theme-light .header { background: linear-gradient(135deg, #0f6e6e, #0a5a5a); color: white; }
         body.theme-light .message-own { background: #0f6e6e; color: white; }
         body.theme-light .message-other { background: #e4e6eb; color: #1a1a2e; }
-        body.theme-light .input-area input { background: white; color: #1a1a2e; border: 1px solid #ccc; }
+        body.theme-light .input-area input { background: white; border: 1px solid #ccc; }
         body.theme-light .sidebar { background: white; }
         body.theme-light .status-bar { background: #e4e6eb; }
         body.theme-light .modal-content { background: white; }
@@ -77,8 +77,6 @@
             border-radius: 50%;
             position: relative;
         }
-        
-        .back-btn:active, .menu-btn:active { background: rgba(255,255,255,0.2); }
         
         .header h1 { font-size: 1.2rem; flex: 1; }
         
@@ -132,6 +130,7 @@
         .message-sender { font-size: 0.65rem; opacity: 0.8; margin-bottom: 4px; }
         .message-text { font-size: 0.95rem; line-height: 1.4; }
         .message-time { font-size: 0.55rem; opacity: 0.5; margin-top: 4px; }
+        .message-image { max-width: 200px; max-height: 200px; border-radius: 12px; margin-top: 5px; cursor: pointer; }
         .message-audio { max-width: 200px; margin-top: 5px; border-radius: 20px; }
         
         .expiry-badge {
@@ -174,8 +173,6 @@
             border-radius: 20px;
         }
         
-        .msg-action:hover { background: rgba(255,255,255,0.2); }
-        
         .input-wrapper {
             background: #0f1420;
             border-top: 1px solid #2a2f40;
@@ -185,7 +182,7 @@
         .input-area {
             padding: 10px 16px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             background: #0f1420;
         }
         
@@ -212,14 +209,9 @@
             justify-content: center;
         }
         
-        .record-btn {
-            background: #8b0000;
-        }
-        
-        .record-btn.recording {
-            background: #ff4444;
-            animation: pulse 1s infinite;
-        }
+        .record-btn { background: #8b0000; }
+        .record-btn.recording { background: #ff4444; animation: pulse 1s infinite; }
+        .image-btn { background: #2a2f40; }
         
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -267,8 +259,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             z-index: 1000;
             transition: opacity 0.3s ease, visibility 0.3s ease;
-            opacity: 1;
-            visibility: visible;
             min-width: 200px;
             max-width: 90%;
         }
@@ -284,9 +274,6 @@
             cursor: pointer;
             width: 28px;
             height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             border-radius: 50%;
             margin-left: 8px;
         }
@@ -306,16 +293,8 @@
         }
         
         .sidebar.open { left: 0; }
-        
-        .sidebar-header {
-            padding: 20px;
-            background: #0f6e6e;
-            color: white;
-        }
-        
-        .sidebar-header h3 { margin-bottom: 5px; }
+        .sidebar-header { padding: 20px; background: #0f6e6e; color: white; }
         .sidebar-header p { font-size: 0.7rem; opacity: 0.8; }
-        
         .sidebar-item {
             padding: 16px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -325,12 +304,7 @@
             gap: 12px;
         }
         
-        .online-users {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px 0;
-        }
-        
+        .online-users { flex: 1; overflow-y: auto; padding: 10px 0; }
         .online-user {
             display: flex;
             align-items: center;
@@ -338,20 +312,12 @@
             padding: 12px 20px;
             cursor: pointer;
         }
-        
-        .user-status {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #00ff00;
-        }
-        
+        .user-status { width: 10px; height: 10px; border-radius: 50%; background: #00ff00; }
         .user-name { flex: 1; }
         .dm-unread {
             background: #ff4444;
             color: white;
             font-size: 10px;
-            font-weight: bold;
             min-width: 18px;
             height: 18px;
             border-radius: 18px;
@@ -371,7 +337,6 @@
             z-index: 999;
             display: none;
         }
-        
         .overlay.show { display: block; }
         
         .modal {
@@ -403,7 +368,6 @@
             border-radius: 12px;
             background: #2a2f40;
             color: white;
-            font-size: 1rem;
         }
         
         .modal-content button {
@@ -424,15 +388,10 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
         .message { animation: fadeIn 0.2s ease; }
         
         @media (max-width: 768px) {
-            .message-actions {
-                top: auto;
-                bottom: -30px;
-                right: 0;
-            }
+            .message-actions { top: auto; bottom: -30px; right: 0; }
         }
     </style>
 </head>
@@ -473,11 +432,14 @@
         <div class="input-area">
             <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button id="sendBtn" onclick="sendMessage()">📨</button>
+            <button id="imageBtn" class="image-btn" style="width:48px;height:48px;">🖼️</button>
             <button id="recordBtn" class="record-btn" style="width:48px;height:48px;">🎤</button>
         </div>
         <div id="recordTimer" class="record-timer" style="display:none;"></div>
     </div>
 </div>
+
+<input type="file" id="imageInput" accept="image/*" style="display:none">
 
 <div id="toast" class="toast hide">
     <div class="toast-icon" id="toastIcon">📩</div>
@@ -493,6 +455,13 @@
         </select>
         <button onclick="confirmForward()">Переслать</button>
         <button onclick="closeModal('forwardModal')">Отмена</button>
+    </div>
+</div>
+
+<div id="imageViewModal" class="modal">
+    <div class="modal-content" style="max-width:90%; text-align:center;">
+        <img id="fullImageView" style="max-width:100%; max-height:70vh; border-radius:12px;">
+        <button onclick="closeModal('imageViewModal')" style="margin-top:15px;">Закрыть</button>
     </div>
 </div>
 
@@ -548,8 +517,8 @@
     let unreadCounts = {};
     let totalUnread = 0;
     
-    // ========== АВТО-УДАЛЕНИЕ ПРОСРОЧЕННЫХ ГОЛОСОВЫХ ==========
-    async function deleteExpiredVoiceMessages() {
+    // ========== АВТО-УДАЛЕНИЕ ПРОСРОЧЕННЫХ ГОЛОСОВЫХ И КАРТИНОК ==========
+    async function deleteExpiredMediaMessages() {
         try {
             const resp = await fetch(`${FIREBASE_URL}messages.json`);
             const msgs = await resp.json() || {};
@@ -558,33 +527,137 @@
             
             for (let id in msgs) {
                 const msg = msgs[id];
-                // Удаляем только голосовые сообщения у которых истёк срок
-                if (msg.type === 'audio' && msg.expiresAt && msg.expiresAt < now) {
+                // Удаляем голосовые И картинки, у которых истёк срок
+                if ((msg.type === 'audio' || msg.type === 'image') && msg.expiresAt && msg.expiresAt < now) {
                     await fetch(`${FIREBASE_URL}messages/${id}.json`, { method: 'DELETE' });
                     deleted++;
-                    
-                    // Если это сообщение уже загружено в кэш — удаляем из processedMessages
-                    if (processedMessages.has(id)) {
-                        processedMessages.delete(id);
-                    }
-                    if (notifiedMessages.has(id)) {
-                        notifiedMessages.delete(id);
-                    }
+                    if (processedMessages.has(id)) processedMessages.delete(id);
+                    if (notifiedMessages.has(id)) notifiedMessages.delete(id);
                 }
             }
             
             if (deleted > 0) {
-                console.log(`🗑️ Удалено ${deleted} просроченных голосовых сообщений`);
-                // Обновляем отображение, если мы в чате где были эти сообщения
+                console.log(`🗑️ Удалено ${deleted} просроченных сообщений (картинки/аудио)`);
                 loadMessages();
             }
-        } catch(e) { console.log("Ошибка удаления голосовых:", e); }
+        } catch(e) { console.log("Ошибка удаления:", e); }
     }
     
-    // Запускаем проверку каждые 30 минут
-    setInterval(deleteExpiredVoiceMessages, 30 * 60 * 1000);
-    // Также проверяем при загрузке страницы
-    setTimeout(deleteExpiredVoiceMessages, 5000);
+    setInterval(deleteExpiredMediaMessages, 30 * 60 * 1000);
+    setTimeout(deleteExpiredMediaMessages, 5000);
+    
+    // ========== ОТПРАВКА КАРТИНКИ ==========
+    async function sendImage(file) {
+        if (!file) return;
+        if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
+        
+        // Сжимаем изображение перед отправкой
+        const compressedBase64 = await compressImage(file);
+        if (!compressedBase64) return;
+        
+        let replyData = null;
+        if (replyTo) {
+            replyData = replyTo;
+            cancelReply();
+        }
+        
+        const expiresAt = Date.now() + VOICE_EXPIRY_MS;
+        
+        addImageMessageToScreen(myName, compressedBase64, true, null, expiresAt);
+        
+        const message = {
+            from: myId,
+            fromName: myName,
+            to: currentChat,
+            type: 'image',
+            imageData: compressedBase64,
+            time: Date.now() / 1000,
+            expiresAt: expiresAt,
+            reply: replyData
+        };
+        
+        try {
+            await fetch(`${FIREBASE_URL}messages.json`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+            });
+        } catch(e) {}
+    }
+    
+    function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxSize = 800;
+                    if (width > height && width > maxSize) {
+                        height = (height * maxSize) / width;
+                        width = maxSize;
+                    } else if (height > maxSize) {
+                        width = (width * maxSize) / height;
+                        height = maxSize;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve(compressed);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    function addImageMessageToScreen(senderName, imageData, isOwn, fullMsg, expiresAt) {
+        const container = document.getElementById("messages");
+        if (container.children.length === 1 && container.children[0].classList?.contains('empty-chat')) container.innerHTML = "";
+        
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
+        const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        
+        let replyHtml = "";
+        if (fullMsg && fullMsg.reply) {
+            const rs = fullMsg.reply.senderName || fullMsg.reply.sender;
+            replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}: "${escapeHtml(fullMsg.reply.text.substring(0, 40))}"</div>`;
+        }
+        
+        let expiryHtml = "";
+        if (expiresAt) {
+            const expiryDate = new Date(expiresAt);
+            const expiryTime = `${expiryDate.getHours().toString().padStart(2,'0')}:${expiryDate.getMinutes().toString().padStart(2,'0')}`;
+            expiryHtml = `<div class="expiry-badge">⏰ Удалится в ${expiryTime}</div>`;
+        }
+        
+        msgDiv.innerHTML = `
+            <div class="message-sender">${escapeHtml(senderName)}</div>
+            ${replyHtml}
+            <img class="message-image" src="${imageData}" loading="lazy">
+            <div class="message-time">${time}</div>
+            ${expiryHtml}
+            <div class="message-actions">
+                <button class="msg-action" onclick="event.stopPropagation(); openForwardModal('${fullMsg?.id || ''}', '🖼️ Изображение', '${fullMsg?.from || ''}', '${escapeHtml(senderName).replace(/'/g, "\\'")}')">📤</button>
+                <button class="msg-action" onclick="event.stopPropagation(); setReply({id: '${fullMsg?.id || ''}', text: '🖼️ Изображение', from: '${fullMsg?.from || (isOwn ? myId : 'unknown')}', fromName: '${escapeHtml(senderName).replace(/'/g, "\\'")}'})">↩️</button>
+            </div>
+        `;
+        
+        const imgElement = msgDiv.querySelector('.message-image');
+        imgElement.onclick = (e) => {
+            e.stopPropagation();
+            document.getElementById('fullImageView').src = imageData;
+            document.getElementById('imageViewModal').style.display = 'flex';
+        };
+        
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+    }
     
     // ========== ЗАПИСЬ ГОЛОСА ==========
     let mediaRecorder = null;
@@ -596,24 +669,20 @@
     
     async function startRecording() {
         if (isRecording) return;
-        
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             
             mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    audioChunks.push(event.data);
-                }
+                if (event.data.size > 0) audioChunks.push(event.data);
             };
             
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const reader = new FileReader();
                 reader.onloadend = async () => {
-                    const base64Audio = reader.result;
-                    await sendAudioMessage(base64Audio);
+                    await sendAudioMessage(reader.result);
                 };
                 reader.readAsDataURL(audioBlob);
                 stream.getTracks().forEach(track => track.stop());
@@ -635,9 +704,7 @@
                 timerDiv.innerHTML = `🎙️ Запись... ${elapsed} сек (макс ${MAX_RECORD_SECONDS})`;
                 if (elapsed >= MAX_RECORD_SECONDS) stopRecording();
             }, 1000);
-            
         } catch(e) {
-            console.error("Ошибка доступа к микрофону:", e);
             showToast("❌ Нет доступа к микрофону", "🎤");
         }
     }
@@ -647,14 +714,10 @@
         mediaRecorder.stop();
         isRecording = false;
         if (recordTimerInterval) clearInterval(recordTimerInterval);
-        
         const recordBtn = document.getElementById('recordBtn');
         recordBtn.classList.remove('recording');
         recordBtn.innerHTML = '🎤';
-        
-        const timerDiv = document.getElementById('recordTimer');
-        timerDiv.style.display = 'none';
-        timerDiv.innerHTML = '';
+        document.getElementById('recordTimer').style.display = 'none';
     }
     
     async function sendAudioMessage(base64Audio) {
@@ -668,9 +731,6 @@
         }
         
         const expiresAt = Date.now() + VOICE_EXPIRY_MS;
-        const expiresDate = new Date(expiresAt);
-        const expiresStr = `${expiresDate.getHours().toString().padStart(2,'0')}:${expiresDate.getMinutes().toString().padStart(2,'0')}`;
-        
         addAudioMessageToScreen(myName, base64Audio, true, null, expiresAt);
         
         const message = {
@@ -908,7 +968,7 @@
                 let isRelevant = false;
                 if (currentChat === 'global') isRelevant = (msg.to === 'global');
                 else isRelevant = (msg.from === myId && msg.to === currentChat) || (msg.from === currentChat && msg.to === myId);
-                if (isRelevant && (msg.text || msg.audioData)) {
+                if (isRelevant && (msg.text || msg.audioData || msg.imageData)) {
                     relevant.push({ id, ...msg });
                     processedMessages.add(id);
                 }
@@ -919,6 +979,8 @@
                 const senderName = isOwn ? myName : (msg.fromName || msg.from);
                 if (msg.type === 'audio' && msg.audioData) {
                     addAudioMessageToScreen(senderName, msg.audioData, isOwn, msg, msg.expiresAt);
+                } else if (msg.type === 'image' && msg.imageData) {
+                    addImageMessageToScreen(senderName, msg.imageData, isOwn, msg, msg.expiresAt);
                 } else {
                     addMessageToScreen(senderName, msg.text, isOwn, msg);
                 }
@@ -1031,6 +1093,16 @@
     recordBtn.addEventListener('mouseleave', stopRecording);
     recordBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); });
     recordBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
+    
+    document.getElementById('imageBtn').addEventListener('click', () => {
+        document.getElementById('imageInput').click();
+    });
+    document.getElementById('imageInput').addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+            sendImage(e.target.files[0]);
+            e.target.value = '';
+        }
+    });
     
     register();
     updateOnline();
