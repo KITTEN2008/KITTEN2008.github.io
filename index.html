@@ -454,8 +454,8 @@
         <div class="call-status">📞 Входящий звонок...</div>
     </div>
     <div class="call-buttons">
-        <button class="answer-btn" id="answerCallBtn">📞</button>
-        <button class="decline-btn" id="declineCallBtn">✖</button>
+        <button class="answer-btn" id="answerCallBtn">📞 Ответить</button>
+        <button class="decline-btn" id="declineCallBtn">✖ Отклонить</button>
     </div>
 </div>
 
@@ -466,7 +466,7 @@
         <div class="call-status" id="callStatus">⏳ Соединение...</div>
     </div>
     <div class="call-buttons">
-        <button class="end-btn" id="endCallBtn">🔴</button>
+        <button class="end-btn" id="endCallBtn">🔴 Завершить</button>
     </div>
 </div>
 
@@ -495,13 +495,13 @@
     let unreadCounts = {};
     let totalUnread = 0;
     
-    // ========== WEBRTC ЗВОНКИ (через Firebase, с отладкой) ==========
+    // ========== WEBRTC ЗВОНКИ ==========
     let localStream = null;
     let currentCall = null;
     let isCallActive = false;
     let incomingCallFrom = null;
+    let incomingOffer = null; // Сохраняем offer для ответа
     let peerConnection = null;
-    let pendingIceCandidates = [];
     let isCalling = false;
     
     const configuration = {
@@ -514,7 +514,6 @@
     
     function logCall(msg) {
         console.log('[CALL]', msg);
-        showToast(msg, "📞");
     }
     
     // Отправка сигнала через Firebase
@@ -543,7 +542,43 @@
                 const data = signals[id];
                 if (data.from !== myId) {
                     logCall(`📨 Получен сигнал ${data.type} от ${data.from}`);
-                    await handleSignal(data.from, data.signal, data.type);
+                    
+                    if (data.type === 'offer') {
+                        // Входящий звонок - показываем модалку, НЕ отвечаем автоматически
+                        if (!isCallActive && !isCalling) {
+                            incomingCallFrom = data.from;
+                            incomingOffer = data.signal;
+                            const callerName = getCallerName(incomingCallFrom);
+                            document.getElementById('callerName').innerHTML = callerName;
+                            document.getElementById('incomingCallModal').style.display = 'flex';
+                            logCall(`📞 Входящий звонок от ${callerName}, ожидание ответа`);
+                        } else {
+                            // Отправляем отказ, если уже занят
+                            await sendSignal(data.from, { type: 'busy' }, 'busy');
+                        }
+                    } 
+                    else if (data.type === 'answer' && isCallActive) {
+                        // Ответ на наш звонок
+                        if (peerConnection) {
+                            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal));
+                            logCall(`✅ Answer установлен`);
+                        }
+                    }
+                    else if (data.type === 'ice' && isCallActive && peerConnection) {
+                        if (peerConnection.remoteDescription) {
+                            await peerConnection.addIceCandidate(new RTCIceCandidate(data.signal));
+                        }
+                    }
+                    else if (data.type === 'busy') {
+                        showToast("📞 Абонент занят", "📞");
+                        endCall();
+                    }
+                    else if (data.type === 'decline') {
+                        showToast("📞 Звонок отклонён", "📞");
+                        endCall();
+                    }
+                    
+                    // Удаляем обработанный сигнал
                     await fetch(`${FIREBASE_URL}signals/${myId}/${id}.json`, { method: 'DELETE' });
                 }
             }
@@ -551,41 +586,7 @@
         setTimeout(listenForSignals, 2000);
     }
     
-    async function handleSignal(fromUserId, signal, type) {
-        if (!isCallActive && type !== 'offer' && !isCalling) {
-            if (type === 'offer') {
-                incomingCallFrom = fromUserId;
-                const callerName = getCallerName(incomingCallFrom);
-                document.getElementById('callerName').innerHTML = callerName;
-                document.getElementById('incomingCallModal').style.display = 'flex';
-                logCall(`📞 Входящий звонок от ${callerName}`);
-                // Сохраняем offer для ответа
-                window.pendingOffer = signal;
-            }
-            return;
-        }
-        
-        if (!peerConnection && (type === 'offer' || type === 'answer')) {
-            await createPeerConnection(fromUserId);
-        }
-        
-        if (signal.type === 'offer' || signal.type === 'answer') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
-            if (signal.type === 'offer') {
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-                await sendSignal(fromUserId, peerConnection.localDescription, 'answer');
-            }
-        } else if (signal.candidate) {
-            if (peerConnection && peerConnection.remoteDescription) {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(signal));
-            } else {
-                pendingIceCandidates.push(signal);
-            }
-        }
-    }
-    
-    async function createPeerConnection(targetUserId) {
+    async function createPeerConnection(targetUserId, isAnswer = false) {
         logCall(`🔌 Создание PeerConnection для ${targetUserId}`);
         peerConnection = new RTCPeerConnection(configuration);
         
@@ -594,8 +595,6 @@
                 peerConnection.addTrack(track, localStream);
                 logCall(`🎤 Добавлен трек микрофона`);
             });
-        } else {
-            logCall(`⚠️ Нет localStream!`);
         }
         
         peerConnection.onicecandidate = (event) => {
@@ -621,13 +620,11 @@
             if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
                 logCall(`❌ Соединение потеряно`);
                 endCall();
+                showToast("📞 Звонок прерван", "📞");
             }
         };
         
-        // Добавляем ожидающие ICE кандидаты
-        while (pendingIceCandidates.length) {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(pendingIceCandidates.shift()));
-        }
+        return peerConnection;
     }
     
     async function startCall() {
@@ -661,6 +658,15 @@
             isCallActive = true;
             isCalling = false;
             logCall(`✅ Offer отправлен, ожидание ответа...`);
+            
+            // Таймаут на ответ (30 секунд)
+            setTimeout(() => {
+                if (isCallActive && !peerConnection?.remoteDescription) {
+                    logCall(`⏰ Таймаут ожидания ответа`);
+                    showToast("📞 Абонент не ответил", "📞");
+                    endCall();
+                }
+            }, 30000);
         } catch(e) {
             logCall(`❌ Ошибка: ${e.message}`);
             showToast("❌ Нет доступа к микрофону", "🎤");
@@ -670,23 +676,19 @@
     }
     
     async function answerCall() {
-        if (!incomingCallFrom) return;
+        if (!incomingCallFrom || !incomingOffer) return;
         logCall(`📞 Ответ на звонок от ${incomingCallFrom}`);
         
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             logCall(`✅ Микрофон получен для ответа`);
             
-            await createPeerConnection(incomingCallFrom);
+            await createPeerConnection(incomingCallFrom, true);
             
-            if (window.pendingOffer) {
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(window.pendingOffer));
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-                await sendSignal(incomingCallFrom, peerConnection.localDescription, 'answer');
-                window.pendingOffer = null;
-                logCall(`✅ Answer отправлен`);
-            }
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            await sendSignal(incomingCallFrom, peerConnection.localDescription, 'answer');
             
             document.getElementById('incomingCallModal').style.display = 'none';
             document.getElementById('activeCallModal').style.display = 'flex';
@@ -694,10 +696,22 @@
             document.getElementById('callStatus').innerHTML = '⏳ Соединение...';
             isCallActive = true;
             incomingCallFrom = null;
+            incomingOffer = null;
+            logCall(`✅ Answer отправлен, ожидание соединения`);
         } catch(e) {
             logCall(`❌ Ошибка при ответе: ${e.message}`);
-            showToast("❌ Нет доступа к микрофону", "🎤");
+            showToast("❌ Не удалось ответить", "🎤");
         }
+    }
+    
+    function declineCall() {
+        if (incomingCallFrom) {
+            logCall(`❌ Отклонение звонка от ${incomingCallFrom}`);
+            sendSignal(incomingCallFrom, { type: 'decline' }, 'decline');
+        }
+        document.getElementById('incomingCallModal').style.display = 'none';
+        incomingCallFrom = null;
+        incomingOffer = null;
     }
     
     function endCall() {
@@ -713,8 +727,7 @@
         isCallActive = false;
         isCalling = false;
         incomingCallFrom = null;
-        pendingIceCandidates = [];
-        window.pendingOffer = null;
+        incomingOffer = null;
         document.getElementById('activeCallModal').style.display = 'none';
         document.getElementById('incomingCallModal').style.display = 'none';
     }
@@ -726,13 +739,9 @@
         return peerId;
     }
     
+    // Кнопки звонков
     document.getElementById('answerCallBtn').onclick = answerCall;
-    document.getElementById('declineCallBtn').onclick = () => {
-        document.getElementById('incomingCallModal').style.display = 'none';
-        incomingCallFrom = null;
-        window.pendingOffer = null;
-        logCall(`❌ Звонок отклонён`);
-    };
+    document.getElementById('declineCallBtn').onclick = declineCall;
     document.getElementById('endCallBtn').onclick = endCall;
     
     function updateCallButton() {
@@ -767,7 +776,7 @@
     setInterval(deleteExpiredMedia, 30 * 60 * 1000);
     setTimeout(deleteExpiredMedia, 5000);
     
-    // ========== КАРТИНКИ ==========
+    // ========== КАРТИНКИ, ВИДЕО, ГОЛОСОВЫЕ (упрощённо) ==========
     async function sendImage(file) {
         if (!file) return;
         if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
@@ -830,7 +839,6 @@
         container.scrollTop = container.scrollHeight;
     }
     
-    // ========== ВИДЕО ==========
     async function sendVideoFile(file) {
         if (!file) return;
         if (bannedUsers.includes(myId)) { alert("⚠️ Вы забанены!"); return; }
@@ -1105,7 +1113,6 @@
     listenForSignals();
     setInterval(register, 30000);
     
-    // Делаем функцию endCall глобальной для отладки
     window.debugEndCall = endCall;
     window.debugStartCall = startCall;
 </script>
