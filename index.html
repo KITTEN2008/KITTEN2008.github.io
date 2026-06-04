@@ -18,7 +18,7 @@
             transition: background 0.3s ease, color 0.3s ease;
         }
         
-        /* ========== ТЕМА: ТЁМНАЯ (по умолчанию) ========== */
+        /* ========== ТЕМЫ ========== */
         body.theme-dark {
             background: #0a0f1e;
             color: #e0e0e0;
@@ -32,10 +32,7 @@
         body.theme-dark .modal-content { background: #1a1f2e; }
         body.theme-dark .toast { background: #1a1f2e; }
         body.theme-dark .online-user.active { background: #0f6e6e; }
-        body.theme-dark .sidebar-item:active { background: #2a2f40; }
-        body.theme-dark .online-user:active { background: #2a2f40; }
         
-        /* ========== ТЕМА: СВЕТЛАЯ ========== */
         body.theme-light {
             background: #f0f2f5;
             color: #1a1a2e;
@@ -49,10 +46,7 @@
         body.theme-light .modal-content { background: white; }
         body.theme-light .toast { background: white; }
         body.theme-light .online-user.active { background: #0f6e6e; color: white; }
-        body.theme-light .sidebar-item:active { background: #e4e6eb; }
-        body.theme-light .online-user:active { background: #e4e6eb; }
         
-        /* ========== ТЕМА: НЕОН ========== */
         body.theme-neon {
             background: #000;
             color: #00ffcc;
@@ -66,10 +60,7 @@
         body.theme-neon .modal-content { background: #0a0a15; border: 1px solid #00ffcc; }
         body.theme-neon .toast { background: #0a0a15; border-left-color: #00ffcc; }
         body.theme-neon .online-user.active { background: #00aa88; color: #000; }
-        body.theme-neon .sidebar-item:active { background: #00aa8833; }
-        body.theme-neon .online-user:active { background: #00aa8833; }
         
-        /* ========== ТЕМА: ВОЕННАЯ ========== */
         body.theme-military {
             background: #2b3b1a;
             color: #d4c9a8;
@@ -83,8 +74,6 @@
         body.theme-military .modal-content { background: #1a1a0a; }
         body.theme-military .toast { background: #1a1a0a; border-left-color: #6b5a3e; }
         body.theme-military .online-user.active { background: #4a5a2a; color: #d4c9a8; }
-        body.theme-military .sidebar-item:active { background: #3a3520; }
-        body.theme-military .online-user:active { background: #3a3520; }
         
         .app {
             display: flex;
@@ -220,6 +209,37 @@
             display: inline-block;
         }
         
+        /* Кнопки действий над сообщением */
+        .message-actions {
+            position: absolute;
+            top: -30px;
+            right: 0;
+            display: none;
+            gap: 5px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 8px;
+            border-radius: 20px;
+            z-index: 10;
+        }
+        
+        .message:hover .message-actions,
+        .message:active .message-actions {
+            display: flex;
+        }
+        
+        .msg-action {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+        
+        .msg-action:hover { background: rgba(255,255,255,0.2); }
+        
         .input-wrapper {
             background: #0f1420;
             border-top: 1px solid #2a2f40;
@@ -276,7 +296,6 @@
             padding: 5px;
         }
         
-        /* Уведомление (toast) - фиксированное положение, не перекрывает поле ввода */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -459,6 +478,14 @@
         }
         
         .message { animation: fadeIn 0.2s ease; }
+        
+        @media (max-width: 768px) {
+            .message-actions {
+                top: auto;
+                bottom: -30px;
+                right: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -514,11 +541,23 @@
     </div>
 </div>
 
-<!-- Уведомление - теперь фиксированное внизу по центру -->
+<!-- Уведомление -->
 <div id="toast" class="toast hide">
     <div class="toast-icon" id="toastIcon">📩</div>
     <div class="toast-content" id="toastContent"></div>
     <button class="toast-close" id="toastCloseBtn">✖</button>
+</div>
+
+<!-- Модалка пересылки -->
+<div id="forwardModal" class="modal">
+    <div class="modal-content">
+        <h3>📤 Переслать сообщение</h3>
+        <select id="forwardTargetSelect" style="width:100%; padding:12px; margin:15px 0;">
+            <option value="global">🌍 Общий чат</option>
+        </select>
+        <button onclick="confirmForward()">Переслать</button>
+        <button onclick="closeModal('forwardModal')">Отмена</button>
+    </div>
 </div>
 
 <!-- Модалка темы -->
@@ -564,9 +603,11 @@
     let currentChat = 'global';
     let currentChatName = 'Общий чат';
     let replyTo = null;
+    let forwardMessageData = null; // Данные для пересылки
     let processedMessages = new Set();
     let notifiedMessages = new Set();
     let bannedUsers = JSON.parse(localStorage.getItem('jnet_banned') || '[]');
+    let onlineUsers = []; // Сохраняем список онлайн пользователей
     
     let unreadCounts = {};
     let totalUnread = 0;
@@ -606,7 +647,7 @@
         } catch(e) {}
     }
     
-    // ========== УВЕДОМЛЕНИЯ (исправлено) ==========
+    // ========== УВЕДОМЛЕНИЯ ==========
     function showToast(text, icon = "📩") {
         const toast = document.getElementById("toast");
         const toastIcon = document.getElementById("toastIcon");
@@ -628,8 +669,62 @@
         if (window.toastTimeout) clearTimeout(window.toastTimeout);
     }
     
-    // Крестик для закрытия уведомления
     document.getElementById("toastCloseBtn")?.addEventListener("click", hideToast);
+    
+    // ========== ПЕРЕСЫЛКА СООБЩЕНИЙ ==========
+    function openForwardModal(msgId, msgText, msgSender, msgSenderName) {
+        // Сохраняем данные сообщения
+        forwardMessageData = {
+            id: msgId,
+            text: msgText,
+            from: msgSender,
+            fromName: msgSenderName
+        };
+        
+        // Заполняем список получателей
+        const select = document.getElementById("forwardTargetSelect");
+        if (!select) return;
+        
+        let options = '<option value="global">🌍 Общий чат</option>';
+        
+        // Добавляем онлайн пользователей (кроме себя)
+        for (let user of onlineUsers) {
+            if (user.id !== myId) {
+                options += `<option value="${user.id}">💬 ${escapeHtml(user.name)} (личный чат)</option>`;
+            }
+        }
+        
+        select.innerHTML = options;
+        document.getElementById("forwardModal").style.display = "flex";
+    }
+    
+    async function confirmForward() {
+        const target = document.getElementById("forwardTargetSelect").value;
+        if (!forwardMessageData) return;
+        
+        const message = {
+            from: myId,
+            fromName: myName,
+            to: target,
+            text: `📤 Переслано от ${forwardMessageData.fromName || forwardMessageData.from}: "${forwardMessageData.text}"`,
+            time: Date.now() / 1000,
+            isForwarded: true
+        };
+        
+        try {
+            await fetch(`${FIREBASE_URL}messages.json`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+            });
+            showToast("✅ Сообщение переслано", "📤");
+        } catch(e) {
+            showToast("❌ Ошибка при пересылке", "❌");
+        }
+        
+        closeModal('forwardModal');
+        forwardMessageData = null;
+    }
     
     function updateUnreadBadges() {
         const badge = document.getElementById("totalUnreadBadge");
@@ -697,16 +792,16 @@
         try {
             const resp = await fetch(`${FIREBASE_URL}peers.json`);
             const peers = await resp.json() || {};
-            let online = [];
+            onlineUsers = [];
             for (let id in peers) {
                 if (id !== myId && !isBanned(id) && (Date.now()/1000 - peers[id].last_seen) < 60) {
-                    online.push({ id, name: peers[id].name || id });
+                    onlineUsers.push({ id, name: peers[id].name || id });
                 }
             }
-            document.getElementById("onlineCount").innerHTML = `🖧 ${online.length}`;
+            document.getElementById("onlineCount").innerHTML = `🖧 ${onlineUsers.length}`;
             
             let html = '';
-            for (let u of online) {
+            for (let u of onlineUsers) {
                 const active = (currentChat === u.id) ? 'active' : '';
                 const unread = unreadCounts[u.id] || 0;
                 html += `<div class="online-user ${active}" data-id="${u.id}" onclick="switchToDM('${u.id}', '${u.name.replace(/'/g, "\\'")}')">
@@ -825,7 +920,7 @@
                 
                 const isForMe = (msg.to === myId);
                 const isReplyToMe = (msg.reply && msg.reply.sender === myId);
-                const isGlobalWhenInDM = (msg.to === 'global' && currentChat !== 'global' && currentChat !== 'global');
+                const isGlobalWhenInDM = (msg.to === 'global' && currentChat !== 'global');
                 
                 if (isForMe && currentChat !== msg.from) {
                     if (!unreadCounts[msg.from]) unreadCounts[msg.from] = 0;
@@ -882,23 +977,37 @@
             replyHtml = `<div class="reply-badge">↩️ Ответ ${escapeHtml(rs)}: "${escapeHtml(fullMsg.reply.text.substring(0, 40))}"</div>`;
         }
         
+        // Добавляем метку "Переслано"
+        let forwardBadge = "";
+        if (fullMsg && fullMsg.isForwarded) {
+            forwardBadge = `<div class="reply-badge">📤 Переслано</div>`;
+        }
+        
         msgDiv.innerHTML = `
             <div class="message-sender">${escapeHtml(senderName)}</div>
+            ${forwardBadge}
             ${replyHtml}
             <div class="message-text">${escapeHtml(text)}</div>
             <div class="message-time">${time}</div>
+            <div class="message-actions">
+                <button class="msg-action" onclick="event.stopPropagation(); openForwardModal('${fullMsg?.id || ''}', '${escapeHtml(text).replace(/'/g, "\\'")}', '${fullMsg?.from || ''}', '${escapeHtml(senderName).replace(/'/g, "\\'")}')">📤</button>
+                <button class="msg-action" onclick="event.stopPropagation(); setReply({id: '${fullMsg?.id || ''}', text: '${escapeHtml(text).replace(/'/g, "\\'")}', from: '${fullMsg?.from || (isOwn ? myId : 'unknown')}', fromName: '${escapeHtml(senderName).replace(/'/g, "\\'")}'})">↩️</button>
+            </div>
         `;
         
-        // Сохраняем данные сообщения для ответа
+        // Клик на само сообщение тоже открывает ответ (для удобства)
         const msgData = {
             id: fullMsg?.id,
             text: text,
             from: fullMsg?.from || (isOwn ? myId : 'unknown'),
             fromName: senderName
         };
-        
         msgDiv.onclick = (function(data) {
-            return function() { setReply(data); };
+            return function(e) {
+                if (!e.target.closest('.msg-action')) {
+                    setReply(data);
+                }
+            };
         })(msgData);
         
         container.appendChild(msgDiv);
