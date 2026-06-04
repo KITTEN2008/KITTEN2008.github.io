@@ -276,45 +276,50 @@
             padding: 5px;
         }
         
+        /* Уведомление (toast) - фиксированное положение, не перекрывает поле ввода */
         .toast {
             position: fixed;
-            bottom: 80px;
-            left: 16px;
-            right: 16px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1f2e;
             border-left: 4px solid #0f6e6e;
-            padding: 14px 16px;
+            padding: 12px 20px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             gap: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 200;
-            transform: translateY(0);
-            transition: transform 0.3s ease;
+            z-index: 1000;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            opacity: 1;
+            visibility: visible;
+            min-width: 200px;
+            max-width: 90%;
         }
         
         .toast.hide {
-            transform: translateY(150%);
+            opacity: 0;
+            visibility: hidden;
         }
         
-        .toast-icon { font-size: 24px; }
-        .toast-content { flex: 1; }
-        .toast-title { font-weight: bold; font-size: 0.85rem; }
-        .toast-text { font-size: 0.75rem; opacity: 0.8; margin-top: 2px; }
+        .toast-icon { font-size: 20px; }
+        .toast-content { font-size: 0.85rem; }
         .toast-close { 
             background: none; 
             border: none; 
             color: #aaa; 
             font-size: 1.2rem; 
             cursor: pointer;
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
+            margin-left: 8px;
         }
-        .toast-close:active { background: rgba(255,255,255,0.1); }
+        .toast-close:hover { background: rgba(255,255,255,0.1); }
         
         .sidebar {
             position: fixed;
@@ -509,13 +514,11 @@
     </div>
 </div>
 
+<!-- Уведомление - теперь фиксированное внизу по центру -->
 <div id="toast" class="toast hide">
     <div class="toast-icon" id="toastIcon">📩</div>
-    <div class="toast-content">
-        <div class="toast-title" id="toastTitle">Новое сообщение</div>
-        <div class="toast-text" id="toastText"></div>
-    </div>
-    <button class="toast-close" onclick="hideToast()">✖</button>
+    <div class="toast-content" id="toastContent"></div>
+    <button class="toast-close" id="toastCloseBtn">✖</button>
 </div>
 
 <!-- Модалка темы -->
@@ -603,15 +606,20 @@
         } catch(e) {}
     }
     
-    function showToast(title, text, icon = "📩") {
-        document.getElementById("toastIcon").innerHTML = icon;
-        document.getElementById("toastTitle").innerHTML = title;
-        document.getElementById("toastText").innerHTML = text;
+    // ========== УВЕДОМЛЕНИЯ (исправлено) ==========
+    function showToast(text, icon = "📩") {
         const toast = document.getElementById("toast");
+        const toastIcon = document.getElementById("toastIcon");
+        const toastContent = document.getElementById("toastContent");
+        
+        toastIcon.innerHTML = icon;
+        toastContent.innerHTML = text;
         toast.classList.remove("hide");
         
         if (window.toastTimeout) clearTimeout(window.toastTimeout);
-        window.toastTimeout = setTimeout(() => hideToast(), 3000);
+        window.toastTimeout = setTimeout(() => {
+            toast.classList.add("hide");
+        }, 3000);
     }
     
     function hideToast() {
@@ -619,6 +627,9 @@
         toast.classList.add("hide");
         if (window.toastTimeout) clearTimeout(window.toastTimeout);
     }
+    
+    // Крестик для закрытия уведомления
+    document.getElementById("toastCloseBtn")?.addEventListener("click", hideToast);
     
     function updateUnreadBadges() {
         const badge = document.getElementById("totalUnreadBadge");
@@ -823,7 +834,7 @@
                     updateUnreadBadges();
                     
                     if (document.hidden || currentChat !== msg.from) {
-                        showToast(msg.fromName || msg.from, msg.text.substring(0, 50), "📩");
+                        showToast(`${msg.fromName || msg.from}: ${msg.text.substring(0, 50)}`, "📩");
                     }
                     notifiedMessages.add(id);
                 } else if (isReplyToMe && currentChat !== msg.from) {
@@ -833,7 +844,7 @@
                     updateUnreadBadges();
                     
                     if (document.hidden || currentChat !== msg.from) {
-                        showToast(`↩️ Ответ от ${msg.fromName || msg.from}`, msg.text.substring(0, 50), "💬");
+                        showToast(`↩️ Ответ от ${msg.fromName || msg.from}: ${msg.text.substring(0, 50)}`, "💬");
                     }
                     notifiedMessages.add(id);
                 } else if (isGlobalWhenInDM && msg.to === 'global' && msg.from !== myId) {
@@ -843,7 +854,7 @@
                     updateUnreadBadges();
                     
                     if (document.hidden) {
-                        showToast(`🌍 Общий чат`, `${msg.fromName || msg.from}: ${msg.text.substring(0, 50)}`, "🌍");
+                        showToast(`🌍 Общий чат: ${msg.fromName || msg.from}: ${msg.text.substring(0, 50)}`, "🌍");
                     }
                     notifiedMessages.add(id);
                 } else {
@@ -895,7 +906,6 @@
     }
     
     function setReply(msg) {
-        // Можно отвечать на ЛЮБОЕ сообщение (и своё, и чужое)
         replyTo = {
             id: msg.id,
             text: msg.text,
@@ -919,6 +929,7 @@
             document.getElementById("myInfo").innerHTML = `${myName}<br>${myId}`;
             await register();
             closeModal('nameModal');
+            showToast("✅ Имя изменено", "✏️");
         }
     }
     
